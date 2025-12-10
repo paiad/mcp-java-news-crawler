@@ -2,6 +2,16 @@
 
 一个基于 **Model Context Protocol (MCP)** 的 Java 热点新闻爬虫服务。它允许 AI 助手（如 Cherry Studio、Claude等）实时通过简单的自然语言指令，获取全网热点新闻、搜索特定事件并分析舆论趋势。
 
+<details>
+<summary>👉 点击展开：LLM调用mcp-java-news-crawler图示</summary>
+<br>
+
+![p1](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p1.png)
+![p2](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p2.png)
+![p3](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p3.png)
+
+</details>
+
 ## ✨ 主要功能
 
 - **🔥 获取多平台热榜** (`get_hot_news`): 支持知乎、微博、B 站、百度、抖音、头条。
