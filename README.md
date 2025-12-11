@@ -1,6 +1,6 @@
 # MCP Java News Crawler
 
-一个基于 **Model Context Protocol (MCP)** 的 Java 热点新闻爬虫服务。它允许 AI 助手（如 Cherry Studio、Claude 等）实时通过简单的自然语言指令，获取全网热点新闻、搜索特定事件并分析舆论趋势。
+一个基于 **Model Context Protocol (MCP)** 的 Java 热点新闻爬虫服务。它允许 AI 助手（如 Claude、Codex、Gemini、Cherry Studio 等）实时通过简单的自然语言指令，获取全网热点新闻、搜索特定事件并分析舆论趋势。
 
 <details>
 <summary>👉 点击展开：LLM调用mcp-java-news-crawler图示</summary>
@@ -90,6 +90,54 @@ java -jar target/mcp-java-news-crawler-jar-with-dependencies.jar
 ```
 
 添加成功后，Claude Code 就会自动识别并根据需要调用这些工具。
+
+## 🤖 Codex (CLI) 配置
+
+如果你使用的是 **OpenAI Codex CLI**，可以通过编辑配置文件添加此 MCP 服务：
+
+1. 打开配置文件 `~/.codex/config.json`（不存在则创建）。
+2. 添加如下内容（请替换为实际路径）：
+
+```json
+{
+  "mcpServers": {
+    "news-crawler": {
+      "command": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-jar",
+        "/path/to/mcp-java-news-crawler/target/mcp-java-news-crawler-jar-with-dependencies.jar"
+      ]
+    }
+  }
+}
+```
+
+保存后重启 Codex CLI，即可自动识别并调用这些工具。
+
+## 💎 Gemini CLI 配置
+
+如果你使用的是 **Google Gemini CLI**，可以通过以下方式配置：
+
+1. 打开配置文件 `~/.gemini/settings.json`（不存在则创建）。
+2. 添加如下内容（请替换为实际路径）：
+
+```json
+{
+  "mcpServers": {
+    "news-crawler": {
+      "command": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-jar",
+        "/path/to/mcp-java-news-crawler/target/mcp-java-news-crawler-jar-with-dependencies.jar"
+      ]
+    }
+  }
+}
+```
+
+保存后重启 Gemini CLI，工具将自动加载并可用于新闻爬取任务。
 
 ---
 
