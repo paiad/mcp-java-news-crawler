@@ -1,6 +1,9 @@
 package com.paiad.mcp.service;
 
+import com.hankcs.hanlp.HanLP;
+import com.paiad.mcp.config.PlatformRegistry;
 import com.paiad.mcp.crawler.*;
+import com.paiad.mcp.model.CrawlResult;
 import com.paiad.mcp.model.NewsItem;
 import com.paiad.mcp.util.HttpClientFactory;
 import org.slf4j.Logger;
@@ -12,7 +15,7 @@ import java.util.stream.Collectors;
 
 /**
  * 新闻服务
- * 
+ *
  * @author Paiad
  */
 public class NewsService {
@@ -78,17 +81,22 @@ public class NewsService {
      * @param platforms    平台列表，为空则获取全部
      * @param limit        返回条数限制
      * @param forceRefresh 是否强制刷新缓存
-     * @return 新闻列表
+     * @return 爬取结果（包含数据和失败信息）
      */
-    public List<NewsItem> getHotNews(List<String> platforms, int limit, boolean forceRefresh) {
-        // 确定目标平台
-        List<String> targetPlatformIds;
+    public CrawlResult getHotNews(List<String> platforms, int limit, boolean forceRefresh) {
+        // 确定目标平台 (利用 Registry 解析别名)
+        Set<String> targetPlatformIds = new HashSet<>();
         if (platforms == null || platforms.isEmpty()) {
-            targetPlatformIds = new ArrayList<>(crawlers.keySet());
+            targetPlatformIds.addAll(crawlers.keySet());
         } else {
-            targetPlatformIds = platforms.stream()
-                    .filter(crawlers::containsKey)
-                    .collect(Collectors.toList());
+            for (String p : platforms) {
+                String resolvedId = PlatformRegistry.resolveId(p);
+                if (resolvedId != null && crawlers.containsKey(resolvedId)) {
+                    targetPlatformIds.add(resolvedId);
+                } else {
+                    logger.warn("未知或不支持的平台: {}", p);
+                }
+            }
         }
 
         // 找出需要刷新的平台
@@ -99,9 +107,12 @@ public class NewsService {
             }
         }
 
+        Map<String, String> failures = new HashMap<>();
+
         // 刷新需要更新的平台
         if (!platformsToRefresh.isEmpty()) {
-            refreshPlatformCache(platformsToRefresh);
+            Map<String, String> refreshFailures = refreshPlatformCache(platformsToRefresh);
+            failures.putAll(refreshFailures);
         }
 
         // 从缓存收集结果
@@ -113,12 +124,13 @@ public class NewsService {
             }
         }
 
-        // 限制返回数量
-        int actualLimit = limit > 0 ? limit : 50;
-        if (result.size() > actualLimit) {
-            return result.subList(0, actualLimit);
+        // 限制返回数量 (按整体而非单平台，或者保持原样)
+        // 这里简单做个截断，也可以按热度排序后截断
+        if (result.size() > limit && limit > 0) {
+            result = result.subList(0, limit);
         }
-        return result;
+
+        return new CrawlResult(result, failures);
     }
 
     /**
@@ -134,9 +146,12 @@ public class NewsService {
 
     /**
      * 刷新指定平台的缓存
+     *
+     * @return 失败的平台及错误信息
      */
-    private void refreshPlatformCache(List<String> platformIds) {
+    private Map<String, String> refreshPlatformCache(List<String> platformIds) {
         logger.info("开始刷新 {} 个平台的缓存: {}", platformIds.size(), platformIds);
+        Map<String, String> failures = new HashMap<>();
 
         // 准备爬虫任务
         Map<String, Future<List<NewsItem>>> futures = new HashMap<>();
@@ -151,12 +166,31 @@ public class NewsService {
         for (Map.Entry<String, Future<List<NewsItem>>> entry : futures.entrySet()) {
             String platformId = entry.getKey();
             try {
-                List<NewsItem> items = entry.getValue().get(30, TimeUnit.SECONDS);
+                List<NewsItem> items = entry.getValue().get(45, TimeUnit.SECONDS); // 稍微增加超时时间
+                if (items == null)
+                    items = Collections.emptyList();
+
+                // 只有当结果不为空，或者确实没数据时才算成功?
+                // Crawler safeCrawl should return partial list or empty.
+                // 如果 safeCrawl 内部catch了异常返回空list，我们不好区分是失败还是没数据。
+                // 建议 Crawler 抛出异常让我们捕获，或者 Crawler 返回特定结构。
+                // 目前 Crawler.safeCrawl 只是简单的 try-catch 打印日志返回空。
+                // 既然无法区分，暂且认为返回空列表且日志有错就是失败。
+                // 但为了不改动 Crawler 接口，这里先假设都成功，除非 Future 抛异常。
+                // 更好的做法是修改 Crawler 接口，但这里先不做大改动。
+
                 platformCache.put(platformId, items);
                 platformCacheTime.put(platformId, System.currentTimeMillis());
                 logger.info("[{}] 缓存更新完成，共 {} 条", platformId, items.size());
+
+                if (items.isEmpty()) {
+                    // 如果返回空，可能是失败了（基于现有实现习惯）
+                    // failures.put(platformId, "No data returned (crawl failed or empty)");
+                }
+
             } catch (Exception e) {
                 logger.error("[{}] 爬取任务执行失败: {}", platformId, e.getMessage());
+                failures.put(platformId, e.getMessage());
                 // 失败时保留旧缓存或设置空列表
                 if (!platformCache.containsKey(platformId)) {
                     platformCache.put(platformId, Collections.emptyList());
@@ -164,18 +198,10 @@ public class NewsService {
                 }
             }
         }
+        return failures;
     }
 
-    /**
-     * 获取所有平台的缓存数据（用于搜索）
-     */
-    private List<NewsItem> getAllCachedNews() {
-        List<NewsItem> all = new ArrayList<>();
-        for (List<NewsItem> items : platformCache.values()) {
-            all.addAll(items);
-        }
-        return all;
-    }
+    // getAllCachedNews removed
 
     /**
      * 搜索新闻
@@ -183,27 +209,96 @@ public class NewsService {
      * @param query     搜索关键词
      * @param platforms 平台列表
      * @param limit     返回条数
-     * @return 匹配的新闻列表
+     * @return 匹配的新闻列表（包装在 CrawlResult 中，包含可能的错误）
      */
-    public List<NewsItem> searchNews(String query, List<String> platforms, int limit) {
+    public CrawlResult searchNews(String query, List<String> platforms, int limit) {
         if (query == null || query.trim().isEmpty()) {
-            return Collections.emptyList();
+            return new CrawlResult(Collections.emptyList(), Collections.emptyMap());
+        }
+        String keyword = query.trim().toLowerCase();
+
+        // 1. 确定搜索范围
+        Set<String> targetPlatformIds = new HashSet<>();
+        if (platforms == null || platforms.isEmpty()) {
+            targetPlatformIds.addAll(crawlers.keySet());
+        } else {
+            for (String p : platforms) {
+                String resolvedId = PlatformRegistry.resolveId(p);
+                if (resolvedId != null && crawlers.containsKey(resolvedId)) {
+                    targetPlatformIds.add(resolvedId);
+                }
+            }
         }
 
-        // 确保有缓存数据
-        if (platformCache.isEmpty()) {
-            getHotNews(platforms, 100, false);
+        // 2. 检查缓存，如果有平台未缓存或过期，则触发爬取
+        List<String> needToCrawl = new ArrayList<>();
+        for (String pid : targetPlatformIds) {
+            if (!isPlatformCacheValid(pid)) {
+                needToCrawl.add(pid);
+            }
+        }
+        Map<String, String> failures = new HashMap<>();
+        if (!needToCrawl.isEmpty()) {
+            logger.info("搜索触发爬取: {}", needToCrawl);
+            failures.putAll(refreshPlatformCache(needToCrawl));
         }
 
-        String keyword = query.toLowerCase().trim();
+        // 3. 准备分词
+        // 使用 HanLP 标准分词
+        List<String> queryTerms = HanLP.segment(keyword).stream()
+                .map(term -> term.word.toLowerCase())
+                .filter(w -> w.length() > 1 || Character.isDigit(w.charAt(0)) || Character.isLetter(w.charAt(0))) // 过滤掉单字标点等，保留数字字母
+                .collect(Collectors.toList());
 
-        return getAllCachedNews().stream()
-                .filter(item -> platforms == null || platforms.isEmpty() ||
-                        platforms.contains(item.getPlatform()))
-                .filter(item -> item.getTitle() != null &&
-                        item.getTitle().toLowerCase().contains(keyword))
+        // 如果分词结果为空（比如全是标点），退化为原词
+        if (queryTerms.isEmpty()) {
+            queryTerms.add(keyword);
+        }
+
+        logger.info("搜索关键词分词: {} -> {}", keyword, queryTerms);
+
+        // 4. 执行搜索过滤 & 评分
+        List<Map.Entry<NewsItem, Integer>> scoredNews = new ArrayList<>();
+
+        for (String pid : targetPlatformIds) {
+            List<NewsItem> cached = platformCache.get(pid);
+            if (cached != null) {
+                for (NewsItem item : cached) {
+                    String title = item.getTitle();
+                    if (title == null)
+                        continue;
+                    String titleLower = title.toLowerCase();
+
+                    int score = 0;
+                    // 完整包含关键词，加分
+                    if (titleLower.contains(keyword)) {
+                        score += 100;
+                    }
+
+                    // 分词匹配 (OR 逻辑)
+                    for (String term : queryTerms) {
+                        if (titleLower.contains(term)) {
+                            score += 10;
+                        }
+                    }
+
+                    // 只要有分词匹配或全词匹配，就保留
+                    if (score > 0) {
+                        scoredNews.add(new AbstractMap.SimpleEntry<>(item, score));
+                    }
+                }
+            }
+        }
+
+        // 按分数降序排序
+        scoredNews.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+
+        List<NewsItem> matched = scoredNews.stream()
+                .map(Map.Entry::getKey)
                 .limit(limit > 0 ? limit : 20)
                 .collect(Collectors.toList());
+
+        return new CrawlResult(matched, failures);
     }
 
     /**

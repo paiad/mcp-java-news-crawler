@@ -33,7 +33,7 @@ public class TrendService {
      */
     public List<TrendingTopic> getTrendingTopics(int topN) {
         // 获取所有热点新闻
-        List<NewsItem> allNews = newsService.getHotNews(null, 200, false);
+        List<NewsItem> allNews = newsService.getHotNews(null, 200, false).getData();
 
         if (allNews.isEmpty()) {
             return Collections.emptyList();

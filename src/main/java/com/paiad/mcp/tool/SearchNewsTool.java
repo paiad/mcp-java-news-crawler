@@ -3,7 +3,9 @@ package com.paiad.mcp.tool;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.paiad.mcp.model.CrawlResult;
 import com.paiad.mcp.model.NewsItem;
 import com.paiad.mcp.service.NewsService;
 
@@ -30,7 +32,7 @@ public class SearchNewsTool implements McpTool {
 
     @Override
     public String getDescription() {
-        return "Search hot news by keyword in titles";
+        return "Search for specific topics or keywords in news across all platforms. Triggers smart crawling if needed. Use this for specific queries.";
     }
 
     @Override
@@ -86,12 +88,18 @@ public class SearchNewsTool implements McpTool {
         int limit = arguments.has("limit") ? arguments.get("limit").asInt(20) : 20;
         limit = Math.min(limit, 100);
 
-        List<NewsItem> news = newsService.searchNews(query, platforms, limit);
+        CrawlResult crawlResult = newsService.searchNews(query, platforms, limit);
+        List<NewsItem> news = crawlResult.getData();
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("success", true);
         result.put("query", query);
         result.put("count", news.size());
+
+        if (crawlResult.hasFailures()) {
+            result.put("failures", crawlResult.getFailures());
+        }
+
         result.put("timestamp", System.currentTimeMillis());
         result.put("data", news);
 

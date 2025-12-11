@@ -3,6 +3,7 @@ package com.paiad.mcp.tool;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.paiad.mcp.model.CrawlResult;
 import com.paiad.mcp.model.NewsItem;
 import com.paiad.mcp.service.NewsService;
 
@@ -29,7 +30,7 @@ public class GetHotNewsTool implements McpTool {
 
     @Override
     public String getDescription() {
-        return "Get hot news from multiple platforms. Supported: zhihu, weibo, bilibili, baidu, douyin, toutiao, x (Twitter), reddit, google_news, wallstreetcn";
+        return "Browse current top trending news from multiple platforms (Zhihu, Weibo, Bilibili, etc). Use this when the user asks 'what's new' or wants to see a leaderboard.";
     }
 
     @Override
@@ -81,11 +82,18 @@ public class GetHotNewsTool implements McpTool {
 
         boolean refresh = arguments.has("refresh") && arguments.get("refresh").asBoolean(false);
 
-        List<NewsItem> news = newsService.getHotNews(platforms, limit, refresh);
+        CrawlResult crawlResult = newsService.getHotNews(platforms, limit, refresh);
+        List<NewsItem> news = crawlResult.getData();
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("success", true);
         result.put("count", news.size());
+
+        if (crawlResult.hasFailures()) {
+            result.put("failures", crawlResult.getFailures());
+            // 如果全部失败且没有数据，标记 success=false ? 保持 true 但返回 error info 更好，让 LLM 决定
+        }
+
         result.put("timestamp", System.currentTimeMillis());
         result.put("data", news);
 
