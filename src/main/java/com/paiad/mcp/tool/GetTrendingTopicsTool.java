@@ -28,7 +28,7 @@ public class GetTrendingTopicsTool implements McpTool {
 
     @Override
     public String getDescription() {
-        return "分析热点新闻，提取热门话题关键词，统计出现频次和跨平台分布情况";
+        return "Analyze hot news and extract trending topic keywords with frequency and cross-platform distribution";
     }
 
     @Override
@@ -40,7 +40,7 @@ public class GetTrendingTopicsTool implements McpTool {
 
         ObjectNode topNProp = objectMapper.createObjectNode();
         topNProp.put("type", "integer");
-        topNProp.put("description", "返回 TOP N 热门话题，默认10");
+        topNProp.put("description", "Return TOP N trending topics, default 10");
         topNProp.put("default", 10);
         properties.set("top_n", topNProp);
 

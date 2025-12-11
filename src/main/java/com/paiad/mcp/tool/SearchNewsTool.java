@@ -30,7 +30,7 @@ public class SearchNewsTool implements McpTool {
 
     @Override
     public String getDescription() {
-        return "在热点新闻中进行关键词搜索，返回标题包含指定关键词的新闻列表";
+        return "Search hot news by keyword in titles";
     }
 
     @Override
@@ -42,7 +42,7 @@ public class SearchNewsTool implements McpTool {
 
         ObjectNode queryProp = objectMapper.createObjectNode();
         queryProp.put("type", "string");
-        queryProp.put("description", "搜索关键词，将在新闻标题中进行模糊匹配");
+        queryProp.put("description", "Search keyword for fuzzy matching in news titles");
         properties.set("query", queryProp);
 
         ObjectNode platformsProp = objectMapper.createObjectNode();
@@ -51,12 +51,12 @@ public class SearchNewsTool implements McpTool {
         items.put("type", "string");
         platformsProp.set("items", items);
         platformsProp.put("description",
-                "限定搜索的平台，可选值：zhihu, weibo, bilibili, baidu, douyin, toutiao, tiktok, x, reddit, google_news");
+                "Limit search to platforms. Options: zhihu, weibo, bilibili, baidu, douyin, toutiao, tiktok, x, reddit, google_news");
         properties.set("platforms", platformsProp);
 
         ObjectNode limitProp = objectMapper.createObjectNode();
         limitProp.put("type", "integer");
-        limitProp.put("description", "返回条数限制，默认20");
+        limitProp.put("description", "Result limit, default 20");
         limitProp.put("default", 20);
         properties.set("limit", limitProp);
 
@@ -72,7 +72,7 @@ public class SearchNewsTool implements McpTool {
     public String execute(JsonNode arguments, ObjectMapper objectMapper) throws Exception {
         String query = arguments.has("query") ? arguments.get("query").asText() : "";
         if (query.isEmpty()) {
-            return "{\"success\": false, \"error\": \"搜索关键词不能为空\"}";
+            return "{\"success\": false, \"error\": \"Query keyword cannot be empty\"}";
         }
 
         List<String> platforms = null;

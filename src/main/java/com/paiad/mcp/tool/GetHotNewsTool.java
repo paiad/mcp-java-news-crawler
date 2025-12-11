@@ -29,7 +29,7 @@ public class GetHotNewsTool implements McpTool {
 
     @Override
     public String getDescription() {
-        return "获取多平台热点新闻列表。支持的平台：知乎(zhihu)、微博(weibo)、B站(bilibili)、百度(baidu)、抖音(douyin)、头条(toutiao)、TikTok(tiktok)、X/Twitter(x)、Reddit(reddit)、Google新闻(google_news)";
+        return "Get hot news from multiple platforms. Supported: zhihu, weibo, bilibili, baidu, douyin, toutiao, tiktok, x (Twitter), reddit, google_news";
     }
 
     @Override
@@ -45,18 +45,18 @@ public class GetHotNewsTool implements McpTool {
         items.put("type", "string");
         platformsProp.set("items", items);
         platformsProp.put("description",
-                "平台ID列表，可选值：zhihu, weibo, bilibili, baidu, douyin, toutiao, tiktok, x, reddit, google_news。不传则获取全部平台");
+                "Platform IDs. Options: zhihu, weibo, bilibili, baidu, douyin, toutiao, tiktok, x, reddit, google_news. Empty for all.");
         properties.set("platforms", platformsProp);
 
         ObjectNode limitProp = objectMapper.createObjectNode();
         limitProp.put("type", "integer");
-        limitProp.put("description", "返回条数限制，默认50，最大200");
+        limitProp.put("description", "Result limit, default 50, max 200");
         limitProp.put("default", 50);
         properties.set("limit", limitProp);
 
         ObjectNode refreshProp = objectMapper.createObjectNode();
         refreshProp.put("type", "boolean");
-        refreshProp.put("description", "是否强制刷新缓存，默认false");
+        refreshProp.put("description", "Force refresh cache, default false");
         refreshProp.put("default", false);
         properties.set("refresh", refreshProp);
 

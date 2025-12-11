@@ -136,7 +136,8 @@ public class McpServerApplication {
         capabilities.set("tools", toolsCap);
         result.set("capabilities", capabilities);
 
-        result.put("instructions", "这是一个热点新闻爬取和分析的 MCP 服务器。支持获取多平台热榜、关键词搜索和趋势分析。");
+        result.put("instructions",
+                "This is a hot news crawling and analysis MCP server. Supports fetching hot rankings from multiple platforms, keyword search, and trend analysis.");
 
         logger.info("客户端初始化完成");
         return createSuccessResponse(id, result);
