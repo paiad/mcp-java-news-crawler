@@ -3,18 +3,17 @@ package com.paiad.mcp.crawler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paiad.mcp.model.NewsItem;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 百度热搜爬虫
- * 
+ *
  * @author Paiad
  */
 public class BaiduCrawler extends AbstractCrawler {
@@ -30,27 +29,17 @@ public class BaiduCrawler extends AbstractCrawler {
     public List<NewsItem> crawl() {
         List<NewsItem> items = new ArrayList<>();
         try {
-            String html = doGet(API_URL);
-            Document doc = Jsoup.parse(html);
+            // 添加请求头
+            Map<String, String> headers = new HashMap<>();
+            headers.put("User-Agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
 
-            // 尝试从 script 标签中提取 JSON 数据
-            Elements scripts = doc.getElementsByTag("script");
-            for (Element script : scripts) {
-                String content = script.html();
-                if (content.contains("window.__APOLLO_STATE__")) {
-                    int start = content.indexOf("window.__APOLLO_STATE__=") + 24;
-                    int end = content.indexOf("};", start) + 1;
-                    if (start > 24 && end > start) {
-                        String jsonStr = content.substring(start, end);
-                        parseApolloState(jsonStr, items);
-                        break;
-                    }
-                }
-            }
+            String html = doGet(API_URL, headers);
 
-            // 如果 JSON 解析失败，尝试 HTML 解析
-            if (items.isEmpty()) {
-                parseHtml(doc, items);
+            // 方法1: 从 <!--s-data:...--> 注释中提取 (newsnow 方式)
+            if (!parseFromSData(html, items)) {
+                // 方法2: 尝试从正则匹配
+                parseFromRegex(html, items);
             }
 
         } catch (Exception e) {
@@ -59,91 +48,100 @@ public class BaiduCrawler extends AbstractCrawler {
         return items;
     }
 
-    private void parseApolloState(String jsonStr, List<NewsItem> items) {
+    /**
+     * 从 <!--s-data:...--> 注释中提取 JSON 数据
+     * 参考: https://github.com/ourongxing/newsnow/blob/main/server/sources/baidu.ts
+     */
+    private boolean parseFromSData(String html, List<NewsItem> items) {
         try {
-            JsonNode json = objectMapper.readTree(jsonStr);
-            int rank = 1;
+            // 匹配 <!--s-data:...--> 注释 (newsnow 的方式)
+            Pattern pattern = Pattern.compile("<!--s-data:(.*?)-->", Pattern.DOTALL);
+            Matcher matcher = pattern.matcher(html);
 
-            Iterator<String> fieldNames = json.fieldNames();
-            while (fieldNames.hasNext()) {
-                String key = fieldNames.next();
-                if (key.startsWith("Card:") && key.contains("realtime")) {
-                    JsonNode card = json.get(key);
-                    JsonNode content = card.get("content");
-                    if (content != null && content.isArray()) {
-                        for (int i = 0; i < content.size(); i++) {
-                            JsonNode ref = content.get(i);
-                            String refKey = ref.has("id") ? ref.get("id").asText() : null;
-                            if (refKey != null) {
-                                JsonNode item = json.get(refKey);
-                                if (item != null) {
-                                    String word = item.has("word") ? item.get("word").asText() : null;
-                                    String url = item.has("rawUrl") ? item.get("rawUrl").asText() : null;
-                                    Long hotScore = item.has("hotScore") ? item.get("hotScore").asLong() : 0L;
+            if (matcher.find()) {
+                String jsonStr = matcher.group(1);
+                JsonNode json = objectMapper.readTree(jsonStr);
 
-                                    if (word != null) {
-                                        NewsItem newsItem = NewsItem.builder()
-                                                .id("baidu_" + rank)
-                                                .title(word)
-                                                .url(url != null ? url
-                                                        : "https://www.baidu.com/s?wd=" + encodeUrl(word))
-                                                .platform(platformId)
-                                                .platformName(platformName)
-                                                .rank(rank++)
-                                                .hotScore(hotScore)
-                                                .hotDesc(formatHotScore(hotScore))
-                                                .timestamp(System.currentTimeMillis())
-                                                .build();
+                // 获取 data.cards[0].content
+                JsonNode data = json.get("data");
+                if (data != null) {
+                    JsonNode cards = data.get("cards");
+                    if (cards != null && cards.isArray() && cards.size() > 0) {
+                        JsonNode content = cards.get(0).get("content");
+                        if (content != null && content.isArray()) {
+                            int rank = 1;
+                            for (JsonNode item : content) {
+                                // 跳过置顶项
+                                boolean isTop = item.has("isTop") && item.get("isTop").asBoolean();
+                                if (isTop) {
+                                    continue;
+                                }
 
-                                        items.add(newsItem);
-                                    }
+                                String word = item.has("word") ? item.get("word").asText() : "";
+                                String rawUrl = item.has("rawUrl") ? item.get("rawUrl").asText() : "";
+                                String desc = item.has("desc") ? item.get("desc").asText() : "";
+                                Long hotScore = item.has("hotScore") ? item.get("hotScore").asLong() : 0L;
+
+                                if (!word.isEmpty()) {
+                                    NewsItem newsItem = NewsItem.builder()
+                                            .id("baidu_" + rank)
+                                            .title(word)
+                                            .url(!rawUrl.isEmpty() ? rawUrl
+                                                    : "https://www.baidu.com/s?wd=" + encodeUrl(word))
+                                            .platform(platformId)
+                                            .platformName(platformName)
+                                            .rank(rank++)
+                                            .hotScore(hotScore)
+                                            .hotDesc(formatHotScore(hotScore))
+                                            .timestamp(System.currentTimeMillis())
+                                            .build();
+
+                                    items.add(newsItem);
                                 }
                             }
+                            return !items.isEmpty();
                         }
                     }
-                    break;
                 }
             }
         } catch (Exception e) {
-            logger.warn("百度热搜 JSON 解析失败: {}", e.getMessage());
+            logger.debug("s-data 解析失败: {}", e.getMessage());
         }
+        return false;
     }
 
-    private void parseHtml(Document doc, List<NewsItem> items) {
-        Elements elements = doc.select(".category-wrap_iQLoo .content_1YWBm");
-        int rank = 1;
+    /**
+     * 使用正则表达式提取数据 (回退方案)
+     */
+    private void parseFromRegex(String html, List<NewsItem> items) {
+        try {
+            // 匹配热搜词条
+            Pattern pattern = Pattern
+                    .compile("\"word\":\"([^\"]+)\"[^}]*\"rawUrl\":\"([^\"]+)\"[^}]*\"hotScore\":(\\d+)");
+            Matcher matcher = pattern.matcher(html);
 
-        for (Element element : elements) {
-            Element titleEl = element.selectFirst(".c-single-text-ellipsis");
-            Element hotEl = element.selectFirst(".hot-index_1Bl1a");
-
-            if (titleEl != null) {
-                String title = titleEl.text().trim();
-                String href = element.selectFirst("a") != null ? element.selectFirst("a").attr("href") : "";
-                String hotText = hotEl != null ? hotEl.text() : "";
+            int rank = 1;
+            while (matcher.find() && rank <= 50) {
+                String word = matcher.group(1);
+                String rawUrl = matcher.group(2).replace("\\u002F", "/");
+                Long hotScore = Long.parseLong(matcher.group(3));
 
                 NewsItem newsItem = NewsItem.builder()
                         .id("baidu_" + rank)
-                        .title(title)
-                        .url(href.isEmpty() ? "https://www.baidu.com/s?wd=" + encodeUrl(title) : href)
+                        .title(word)
+                        .url(rawUrl)
                         .platform(platformId)
                         .platformName(platformName)
                         .rank(rank++)
-                        .hotScore(parseHotScore(hotText))
-                        .hotDesc(hotText)
+                        .hotScore(hotScore)
+                        .hotDesc(formatHotScore(hotScore))
                         .timestamp(System.currentTimeMillis())
                         .build();
 
                 items.add(newsItem);
             }
-        }
-    }
-
-    private Long parseHotScore(String text) {
-        try {
-            return Long.parseLong(text.replaceAll("[^0-9]", ""));
         } catch (Exception e) {
-            return 0L;
+            logger.debug("正则解析失败: {}", e.getMessage());
         }
     }
 
