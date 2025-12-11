@@ -59,6 +59,10 @@ public class NewsService {
         addCrawler(new BaiduCrawler());
         addCrawler(new DouyinCrawler());
         addCrawler(new ToutiaoCrawler());
+        addCrawler(new TikTokCrawler());
+        addCrawler(new XCrawler());
+        addCrawler(new RedditCrawler());
+        addCrawler(new GoogleNewsCrawler());
         logger.info("初始化 {} 个平台爬虫", crawlers.size());
     }
 
