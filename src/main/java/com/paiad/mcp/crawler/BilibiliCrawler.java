@@ -1,8 +1,8 @@
 package com.paiad.mcp.crawler;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paiad.mcp.model.NewsItem;
+import com.paiad.mcp.util.JsonUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,7 +17,6 @@ import java.util.Map;
 public class BilibiliCrawler extends AbstractCrawler {
 
     private static final String HOT_ALL_URL = "https://api.bilibili.com/x/web-interface/popular?ps=50&pn=1";
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public BilibiliCrawler() {
         super("bilibili", "B站");
@@ -31,7 +30,7 @@ public class BilibiliCrawler extends AbstractCrawler {
             headers.put("Referer", "https://www.bilibili.com/");
 
             String response = doGet(HOT_ALL_URL, headers);
-            JsonNode json = objectMapper.readTree(response);
+            JsonNode json = JsonUtils.getMapper().readTree(response);
 
             if (json.has("code") && json.get("code").asInt() == 0) {
                 JsonNode data = json.get("data");

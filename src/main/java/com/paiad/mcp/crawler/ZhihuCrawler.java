@@ -1,8 +1,8 @@
 package com.paiad.mcp.crawler;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paiad.mcp.model.NewsItem;
+import com.paiad.mcp.util.JsonUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,7 +18,6 @@ public class ZhihuCrawler extends AbstractCrawler {
 
     // 关键: 使用 api.zhihu.com 而非 www.zhihu.com
     private static final String API_URL = "https://api.zhihu.com/topstory/hot-lists/total?limit=50";
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ZhihuCrawler() {
         super("zhihu", "知乎");
@@ -34,7 +33,7 @@ public class ZhihuCrawler extends AbstractCrawler {
                     "Mozilla/5.0 (iPhone; CPU iPhone OS 14_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.1 Mobile/15E148 Safari/604.1");
 
             String response = doGet(API_URL, headers);
-            JsonNode json = objectMapper.readTree(response);
+            JsonNode json = JsonUtils.getMapper().readTree(response);
             JsonNode data = json.get("data");
 
             if (data != null && data.isArray()) {

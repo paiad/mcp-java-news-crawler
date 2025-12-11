@@ -1,8 +1,8 @@
 package com.paiad.mcp.crawler;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paiad.mcp.model.NewsItem;
+import com.paiad.mcp.util.JsonUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,7 +17,6 @@ import java.util.Map;
 public class DouyinCrawler extends AbstractCrawler {
 
     private static final String API_URL = "https://www.douyin.com/aweme/v1/web/hot/search/list/";
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public DouyinCrawler() {
         super("douyin", "抖音");
@@ -32,7 +31,7 @@ public class DouyinCrawler extends AbstractCrawler {
             headers.put("Accept", "application/json, text/plain, */*");
 
             String response = doGet(API_URL, headers);
-            JsonNode json = objectMapper.readTree(response);
+            JsonNode json = JsonUtils.getMapper().readTree(response);
 
             Integer statusCode = json.has("status_code") ? json.get("status_code").asInt() : null;
             if (statusCode != null && statusCode == 0) {

@@ -27,6 +27,8 @@ public class PlatformConfig {
         PLATFORMS.put("douyin",
                 new PlatformInfo("douyin", "抖音", "https://www.douyin.com/aweme/v1/web/hot/search/list/"));
         PLATFORMS.put("toutiao", new PlatformInfo("toutiao", "头条", "https://www.toutiao.com/hot-event/hot-board/"));
+        PLATFORMS.put("wallstreetcn",
+                new PlatformInfo("wallstreetcn", "华尔街见闻", "https://api-one-wscn.awtmt.com/apiv1/content/articles/hot"));
     }
 
     /**

@@ -1,8 +1,8 @@
 package com.paiad.mcp.crawler;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paiad.mcp.model.NewsItem;
+import com.paiad.mcp.util.JsonUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,7 +17,6 @@ import java.util.Map;
 public class WallStreetCnCrawler extends AbstractCrawler {
 
     private static final String API_URL = "https://api-one-wscn.awtmt.com/apiv1/content/articles/hot?limit=50&period=all";
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public WallStreetCnCrawler() {
         super("wallstreetcn", "华尔街见闻");
@@ -33,7 +32,7 @@ public class WallStreetCnCrawler extends AbstractCrawler {
             headers.put("Referer", "https://wallstreetcn.com/");
 
             String response = doGet(API_URL, headers);
-            JsonNode json = objectMapper.readTree(response);
+            JsonNode json = JsonUtils.getMapper().readTree(response);
 
             if (json.has("code") && json.get("code").asInt() == 20000) {
                 JsonNode data = json.get("data");

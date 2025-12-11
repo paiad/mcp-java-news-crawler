@@ -1,8 +1,8 @@
 package com.paiad.mcp.crawler;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paiad.mcp.model.NewsItem;
+import com.paiad.mcp.util.JsonUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,7 +17,6 @@ import java.util.Map;
 public class WeiboCrawler extends AbstractCrawler {
 
     private static final String API_URL = "https://weibo.com/ajax/side/hotSearch";
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public WeiboCrawler() {
         super("weibo", "微博");
@@ -33,7 +32,7 @@ public class WeiboCrawler extends AbstractCrawler {
                     "SUB=_2AkMTqH_Sf8NxqwFRmP8TzmLkb4tyywzEieKnRqMJJRMxHRl-yT9jqhALtRB6PaaYU2R-f_xhJaXxVQaZ_nLlGcZf-jXD");
 
             String response = doGet(API_URL, headers);
-            JsonNode json = objectMapper.readTree(response);
+            JsonNode json = JsonUtils.getMapper().readTree(response);
             JsonNode data = json.get("data");
 
             if (data != null) {

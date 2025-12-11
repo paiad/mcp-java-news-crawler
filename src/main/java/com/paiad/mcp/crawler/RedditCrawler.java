@@ -1,8 +1,8 @@
 package com.paiad.mcp.crawler;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paiad.mcp.model.NewsItem;
+import com.paiad.mcp.util.JsonUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,6 @@ public class RedditCrawler extends AbstractCrawler {
 
     // Reddit 公开 JSON 接口，加上 .json 后缀即可
     private static final String API_URL = "https://www.reddit.com/r/all/hot.json?limit=25";
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public RedditCrawler() {
         super("reddit", "Reddit");
@@ -33,7 +32,7 @@ public class RedditCrawler extends AbstractCrawler {
             String response = doGet(API_URL, headers);
 
             if (response != null && !response.isEmpty()) {
-                JsonNode json = objectMapper.readTree(response);
+                JsonNode json = JsonUtils.getMapper().readTree(response);
                 JsonNode data = json.get("data");
                 if (data != null) {
                     JsonNode children = data.get("children");

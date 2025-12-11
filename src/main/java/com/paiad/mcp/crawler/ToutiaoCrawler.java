@@ -1,8 +1,8 @@
 package com.paiad.mcp.crawler;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paiad.mcp.model.NewsItem;
+import com.paiad.mcp.util.JsonUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,7 +17,6 @@ import java.util.Map;
 public class ToutiaoCrawler extends AbstractCrawler {
 
     private static final String API_URL = "https://www.toutiao.com/hot-event/hot-board/?origin=toutiao_pc";
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ToutiaoCrawler() {
         super("toutiao", "头条");
@@ -31,7 +30,7 @@ public class ToutiaoCrawler extends AbstractCrawler {
             headers.put("Referer", "https://www.toutiao.com/");
 
             String response = doGet(API_URL, headers);
-            JsonNode json = objectMapper.readTree(response);
+            JsonNode json = JsonUtils.getMapper().readTree(response);
 
             String status = json.has("status") ? json.get("status").asText() : "";
             if ("success".equals(status)) {

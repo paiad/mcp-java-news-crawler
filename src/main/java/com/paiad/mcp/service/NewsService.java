@@ -2,6 +2,7 @@ package com.paiad.mcp.service;
 
 import com.paiad.mcp.crawler.*;
 import com.paiad.mcp.model.NewsItem;
+import com.paiad.mcp.util.HttpClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,8 @@ public class NewsService {
 
     public NewsService() {
         this.crawlers = new HashMap<>();
-        this.executorService = Executors.newFixedThreadPool(6);
+        // 线程池大小增加到12，确保能并发处理所有爬虫
+        this.executorService = Executors.newFixedThreadPool(12);
         initCrawlers();
     }
 
@@ -59,7 +61,6 @@ public class NewsService {
         addCrawler(new BaiduCrawler());
         addCrawler(new DouyinCrawler());
         addCrawler(new ToutiaoCrawler());
-        addCrawler(new TikTokCrawler());
         addCrawler(new XCrawler());
         addCrawler(new RedditCrawler());
         addCrawler(new GoogleNewsCrawler());
@@ -202,5 +203,7 @@ public class NewsService {
      */
     public void shutdown() {
         executorService.shutdown();
+        // 关闭共享的 HttpClient
+        HttpClientFactory.shutdown();
     }
 }

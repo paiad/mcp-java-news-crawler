@@ -15,12 +15,12 @@ public class CrawlerTest {
         System.out.println("========== 爬虫测试开始 ==========\n");
 
         // 测试所有国内平台爬虫
-//        testCrawler(new WeiboCrawler());
-//        testCrawler(new DouyinCrawler());
-//        testCrawler(new ToutiaoCrawler());
-//        testCrawler(new BilibiliCrawler());
-//        testCrawler(new BaiduCrawler());
-//        testCrawler(new ZhihuCrawler());
+        testCrawler(new WeiboCrawler());
+        testCrawler(new DouyinCrawler());
+        testCrawler(new ToutiaoCrawler());
+        testCrawler(new BilibiliCrawler());
+        testCrawler(new BaiduCrawler());
+        testCrawler(new ZhihuCrawler());
         testCrawler(new WallStreetCnCrawler());
 
         System.out.println("\n========== 爬虫测试结束 ==========");

@@ -1,8 +1,8 @@
 package com.paiad.mcp.crawler;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paiad.mcp.model.NewsItem;
+import com.paiad.mcp.util.JsonUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,7 +19,6 @@ import java.util.regex.Pattern;
 public class BaiduCrawler extends AbstractCrawler {
 
     private static final String API_URL = "https://top.baidu.com/board?tab=realtime";
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public BaiduCrawler() {
         super("baidu", "百度");
@@ -60,7 +59,7 @@ public class BaiduCrawler extends AbstractCrawler {
 
             if (matcher.find()) {
                 String jsonStr = matcher.group(1);
-                JsonNode json = objectMapper.readTree(jsonStr);
+                JsonNode json = JsonUtils.getMapper().readTree(jsonStr);
 
                 // 获取 data.cards[0].content
                 JsonNode data = json.get("data");

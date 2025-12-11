@@ -29,7 +29,7 @@ public class GetHotNewsTool implements McpTool {
 
     @Override
     public String getDescription() {
-        return "Get hot news from multiple platforms. Supported: zhihu, weibo, bilibili, baidu, douyin, toutiao, tiktok, x (Twitter), reddit, google_news";
+        return "Get hot news from multiple platforms. Supported: zhihu, weibo, bilibili, baidu, douyin, toutiao, x (Twitter), reddit, google_news, wallstreetcn";
     }
 
     @Override
@@ -45,7 +45,7 @@ public class GetHotNewsTool implements McpTool {
         items.put("type", "string");
         platformsProp.set("items", items);
         platformsProp.put("description",
-                "Platform IDs. Options: zhihu, weibo, bilibili, baidu, douyin, toutiao, tiktok, x, reddit, google_news. Empty for all.");
+                "Platform IDs. Options: zhihu, weibo, bilibili, baidu, douyin, toutiao, x, reddit, google_news, wallstreetcn. Empty for all.");
         properties.set("platforms", platformsProp);
 
         ObjectNode limitProp = objectMapper.createObjectNode();

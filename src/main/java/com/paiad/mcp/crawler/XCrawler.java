@@ -1,8 +1,8 @@
 package com.paiad.mcp.crawler;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paiad.mcp.model.NewsItem;
+import com.paiad.mcp.util.JsonUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,6 @@ public class XCrawler extends AbstractCrawler {
     // X/Twitter 必须使用 OAuth 2.0 API 或 Guest Token 机制
     // 公开 URL 通常无法直接获取 JSON
     private static final String API_URL = "https://api.twitter.com/2/trends/by/woeid/1"; // 1 = World, 可改为特定地区
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public XCrawler() {
         super("x", "X (Twitter)");
@@ -47,7 +46,7 @@ public class XCrawler extends AbstractCrawler {
             String response = doGet(API_URL, headers);
 
             if (response != null && !response.isEmpty()) {
-                JsonNode json = objectMapper.readTree(response);
+                JsonNode json = JsonUtils.getMapper().readTree(response);
                 if (json.isArray() && json.size() > 0) {
                     JsonNode trends = json.get(0).get("trends");
                     if (trends != null && trends.isArray()) {

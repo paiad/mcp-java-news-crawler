@@ -1,6 +1,7 @@
 package com.paiad.mcp.crawler;
 
 import com.paiad.mcp.model.NewsItem;
+import com.paiad.mcp.util.HttpClientFactory;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -10,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 抽象爬虫基类
@@ -22,7 +22,7 @@ public abstract class AbstractCrawler {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     /**
-     * HTTP 客户端
+     * HTTP 客户端 - 使用共享实例避免资源耗尽
      */
     protected final OkHttpClient httpClient;
 
@@ -39,19 +39,7 @@ public abstract class AbstractCrawler {
     public AbstractCrawler(String platformId, String platformName) {
         this.platformId = platformId;
         this.platformName = platformName;
-        this.httpClient = createHttpClient();
-    }
-
-    /**
-     * 创建 HTTP 客户端
-     */
-    private OkHttpClient createHttpClient() {
-        return new OkHttpClient.Builder()
-                .connectTimeout(15, TimeUnit.SECONDS)
-                .readTimeout(15, TimeUnit.SECONDS)
-                .writeTimeout(15, TimeUnit.SECONDS)
-                .followRedirects(true)
-                .build();
+        this.httpClient = HttpClientFactory.getInstance();
     }
 
     /**
@@ -70,7 +58,7 @@ public abstract class AbstractCrawler {
                 .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
                 .header("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
                 .header("Accept-Encoding", "gzip, deflate, br")
-                .header("Connection", "keep-alive")
+                .header("Connection", "close")
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
@@ -112,10 +100,15 @@ public abstract class AbstractCrawler {
     public List<NewsItem> safeCrawl() {
         try {
             List<NewsItem> items = crawl();
-            logger.info("[{}] 成功爬取 {} 条热榜数据", platformName, items.size());
+            if (items.isEmpty()) {
+                logger.warn("[{}] 爬取完成但返回空数据", platformName);
+            } else {
+                logger.info("[{}] 成功爬取 {} 条热榜数据", platformName, items.size());
+            }
             return items;
         } catch (Exception e) {
-            logger.error("[{}] 爬取失败: {}", platformName, e.getMessage(), e);
+            // 记录详细的错误信息
+            logger.error("[{}] 爬取失败: {} ({})", platformName, e.getMessage(), e.getClass().getSimpleName());
             return Collections.emptyList();
         }
     }
