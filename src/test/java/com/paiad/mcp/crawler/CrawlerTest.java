@@ -15,12 +15,13 @@ public class CrawlerTest {
         System.out.println("========== 爬虫测试开始 ==========\n");
 
         // 测试所有国内平台爬虫
-         testCrawler(new WeiboCrawler());
-         testCrawler(new DouyinCrawler());
-         testCrawler(new ToutiaoCrawler());
-         testCrawler(new BilibiliCrawler());
-         testCrawler(new BaiduCrawler());
-         testCrawler(new ZhihuCrawler());
+//        testCrawler(new WeiboCrawler());
+//        testCrawler(new DouyinCrawler());
+//        testCrawler(new ToutiaoCrawler());
+//        testCrawler(new BilibiliCrawler());
+//        testCrawler(new BaiduCrawler());
+//        testCrawler(new ZhihuCrawler());
+        testCrawler(new WallStreetCnCrawler());
 
         System.out.println("\n========== 爬虫测试结束 ==========");
     }
@@ -89,9 +90,12 @@ public class CrawlerTest {
             case "zhihu":
                 crawler = new ZhihuCrawler();
                 break;
+            case "wallstreetcn":
+                crawler = new WallStreetCnCrawler();
+                break;
             default:
                 System.out.println("未知平台: " + platformId);
-                System.out.println("支持的平台: weibo, douyin, toutiao, bilibili, baidu, zhihu");
+                System.out.println("支持的平台: weibo, douyin, toutiao, bilibili, baidu, zhihu, wallstreetcn");
                 return;
         }
 

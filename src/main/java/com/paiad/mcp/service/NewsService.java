@@ -63,6 +63,7 @@ public class NewsService {
         addCrawler(new XCrawler());
         addCrawler(new RedditCrawler());
         addCrawler(new GoogleNewsCrawler());
+        addCrawler(new WallStreetCnCrawler());
         logger.info("初始化 {} 个平台爬虫", crawlers.size());
     }
 
