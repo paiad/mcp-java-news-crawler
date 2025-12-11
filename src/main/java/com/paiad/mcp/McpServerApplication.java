@@ -30,8 +30,9 @@ public class McpServerApplication {
 
     private static final Logger logger = LoggerFactory.getLogger(McpServerApplication.class);
 
-    private static final String SERVER_NAME = "paiad-news-mcp";
-    private static final String SERVER_VERSION = "1.0.0";
+    private static final String SERVER_NAME = "mcp-java-news-crawler";
+    private static final String SERVER_VERSION = "1.1.0";
+    // MCP 协议版本（"2024-11-05" - 当前最新的稳定版本）
     private static final String PROTOCOL_VERSION = "2024-11-05";
 
     private final ObjectMapper objectMapper;
