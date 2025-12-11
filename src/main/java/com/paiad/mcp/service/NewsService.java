@@ -30,14 +30,14 @@ public class NewsService {
     private final ExecutorService executorService;
 
     /**
-     * 缓存的新闻数据
+     * 按平台缓存的新闻数据
      */
-    private volatile List<NewsItem> cachedNews = new ArrayList<>();
+    private final Map<String, List<NewsItem>> platformCache = new ConcurrentHashMap<>();
 
     /**
-     * 缓存时间
+     * 按平台缓存的时间
      */
-    private volatile long cacheTime = 0;
+    private final Map<String, Long> platformCacheTime = new ConcurrentHashMap<>();
 
     /**
      * 缓存有效期（毫秒）
@@ -81,78 +81,100 @@ public class NewsService {
      * @return 新闻列表
      */
     public List<NewsItem> getHotNews(List<String> platforms, int limit, boolean forceRefresh) {
-        // 检查缓存
-        if (!forceRefresh && isCacheValid()) {
-            return filterAndLimit(cachedNews, platforms, limit);
-        }
-
-        // 刷新缓存
-        refreshCache(platforms);
-        return filterAndLimit(cachedNews, platforms, limit);
-    }
-
-    /**
-     * 刷新缓存
-     */
-    private synchronized void refreshCache(List<String> platforms) {
-        // 双重检查
-        if (isCacheValid()) {
-            return;
-        }
-
-        logger.info("开始刷新新闻缓存...");
-        List<NewsItem> allNews = new ArrayList<>();
-
-        // 确定要爬取的平台
-        Collection<AbstractCrawler> targetCrawlers;
+        // 确定目标平台
+        List<String> targetPlatformIds;
         if (platforms == null || platforms.isEmpty()) {
-            targetCrawlers = crawlers.values();
+            targetPlatformIds = new ArrayList<>(crawlers.keySet());
         } else {
-            targetCrawlers = platforms.stream()
-                    .map(crawlers::get)
-                    .filter(Objects::nonNull)
+            targetPlatformIds = platforms.stream()
+                    .filter(crawlers::containsKey)
                     .collect(Collectors.toList());
         }
 
-        // 并发爬取
-        List<Future<List<NewsItem>>> futures = new ArrayList<>();
-        for (AbstractCrawler crawler : targetCrawlers) {
-            futures.add(executorService.submit(crawler::safeCrawl));
-        }
-
-        // 收集结果
-        for (Future<List<NewsItem>> future : futures) {
-            try {
-                List<NewsItem> items = future.get(30, TimeUnit.SECONDS);
-                allNews.addAll(items);
-            } catch (Exception e) {
-                logger.error("爬取任务执行失败: {}", e.getMessage());
+        // 找出需要刷新的平台
+        List<String> platformsToRefresh = new ArrayList<>();
+        for (String platformId : targetPlatformIds) {
+            if (forceRefresh || !isPlatformCacheValid(platformId)) {
+                platformsToRefresh.add(platformId);
             }
         }
 
-        // 更新缓存
-        this.cachedNews = allNews;
-        this.cacheTime = System.currentTimeMillis();
-        logger.info("缓存刷新完成，共 {} 条新闻", allNews.size());
+        // 刷新需要更新的平台
+        if (!platformsToRefresh.isEmpty()) {
+            refreshPlatformCache(platformsToRefresh);
+        }
+
+        // 从缓存收集结果
+        List<NewsItem> result = new ArrayList<>();
+        for (String platformId : targetPlatformIds) {
+            List<NewsItem> cached = platformCache.get(platformId);
+            if (cached != null) {
+                result.addAll(cached);
+            }
+        }
+
+        // 限制返回数量
+        int actualLimit = limit > 0 ? limit : 50;
+        if (result.size() > actualLimit) {
+            return result.subList(0, actualLimit);
+        }
+        return result;
     }
 
     /**
-     * 检查缓存是否有效
+     * 检查指定平台的缓存是否有效
      */
-    private boolean isCacheValid() {
-        return !cachedNews.isEmpty() &&
-                (System.currentTimeMillis() - cacheTime) < CACHE_TTL;
+    private boolean isPlatformCacheValid(String platformId) {
+        Long cacheTime = platformCacheTime.get(platformId);
+        if (cacheTime == null) {
+            return false;
+        }
+        return (System.currentTimeMillis() - cacheTime) < CACHE_TTL;
     }
 
     /**
-     * 过滤并限制数量
+     * 刷新指定平台的缓存
      */
-    private List<NewsItem> filterAndLimit(List<NewsItem> news, List<String> platforms, int limit) {
-        return news.stream()
-                .filter(item -> platforms == null || platforms.isEmpty() ||
-                        platforms.contains(item.getPlatform()))
-                .limit(limit > 0 ? limit : 50)
-                .collect(Collectors.toList());
+    private void refreshPlatformCache(List<String> platformIds) {
+        logger.info("开始刷新 {} 个平台的缓存: {}", platformIds.size(), platformIds);
+
+        // 准备爬虫任务
+        Map<String, Future<List<NewsItem>>> futures = new HashMap<>();
+        for (String platformId : platformIds) {
+            AbstractCrawler crawler = crawlers.get(platformId);
+            if (crawler != null) {
+                futures.put(platformId, executorService.submit(crawler::safeCrawl));
+            }
+        }
+
+        // 收集结果并更新缓存
+        for (Map.Entry<String, Future<List<NewsItem>>> entry : futures.entrySet()) {
+            String platformId = entry.getKey();
+            try {
+                List<NewsItem> items = entry.getValue().get(30, TimeUnit.SECONDS);
+                platformCache.put(platformId, items);
+                platformCacheTime.put(platformId, System.currentTimeMillis());
+                logger.info("[{}] 缓存更新完成，共 {} 条", platformId, items.size());
+            } catch (Exception e) {
+                logger.error("[{}] 爬取任务执行失败: {}", platformId, e.getMessage());
+                // 失败时保留旧缓存或设置空列表
+                if (!platformCache.containsKey(platformId)) {
+                    platformCache.put(platformId, Collections.emptyList());
+                    platformCacheTime.put(platformId, System.currentTimeMillis());
+                }
+            }
+        }
+    }
+
+    /**
+     * 获取所有平台的缓存数据（用于搜索）
+     */
+    private List<NewsItem> getAllCachedNews() {
+        List<NewsItem> all = new ArrayList<>();
+        for (List<NewsItem> items : platformCache.values()) {
+            all.addAll(items);
+        }
+        return all;
     }
 
     /**
@@ -169,13 +191,13 @@ public class NewsService {
         }
 
         // 确保有缓存数据
-        if (cachedNews.isEmpty()) {
+        if (platformCache.isEmpty()) {
             getHotNews(platforms, 100, false);
         }
 
         String keyword = query.toLowerCase().trim();
 
-        return cachedNews.stream()
+        return getAllCachedNews().stream()
                 .filter(item -> platforms == null || platforms.isEmpty() ||
                         platforms.contains(item.getPlatform()))
                 .filter(item -> item.getTitle() != null &&
