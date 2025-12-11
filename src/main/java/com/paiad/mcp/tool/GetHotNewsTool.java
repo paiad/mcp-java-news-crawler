@@ -29,7 +29,7 @@ public class GetHotNewsTool implements McpTool {
 
     @Override
     public String getDescription() {
-        return "获取多平台热点新闻列表。支持的平台：知乎(zhihu)、微博(weibo)、B站(bilibili)、百度(baidu)、抖音(douyin)、头条(toutiao)";
+        return "获取多平台热点新闻列表。支持的平台：知乎(zhihu)、微博(weibo)、B站(bilibili)、百度(baidu)、抖音(douyin)、头条(toutiao)、TikTok(tiktok)、X/Twitter(x)、Reddit(reddit)、Google新闻(google_news)";
     }
 
     @Override
@@ -44,7 +44,8 @@ public class GetHotNewsTool implements McpTool {
         ObjectNode items = objectMapper.createObjectNode();
         items.put("type", "string");
         platformsProp.set("items", items);
-        platformsProp.put("description", "平台ID列表，可选值：zhihu, weibo, bilibili, baidu, douyin, toutiao。不传则获取全部平台");
+        platformsProp.put("description",
+                "平台ID列表，可选值：zhihu, weibo, bilibili, baidu, douyin, toutiao, tiktok, x, reddit, google_news。不传则获取全部平台");
         properties.set("platforms", platformsProp);
 
         ObjectNode limitProp = objectMapper.createObjectNode();

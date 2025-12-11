@@ -50,7 +50,8 @@ public class SearchNewsTool implements McpTool {
         ObjectNode items = objectMapper.createObjectNode();
         items.put("type", "string");
         platformsProp.set("items", items);
-        platformsProp.put("description", "限定搜索的平台，可选值：zhihu, weibo, bilibili, baidu, douyin, toutiao");
+        platformsProp.put("description",
+                "限定搜索的平台，可选值：zhihu, weibo, bilibili, baidu, douyin, toutiao, tiktok, x, reddit, google_news");
         properties.set("platforms", platformsProp);
 
         ObjectNode limitProp = objectMapper.createObjectNode();

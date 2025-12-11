@@ -1,6 +1,6 @@
 # MCP Java News Crawler
 
-一个基于 **Model Context Protocol (MCP)** 的 Java 热点新闻爬虫服务。它允许 AI 助手（如 Cherry Studio、Claude等）实时通过简单的自然语言指令，获取全网热点新闻、搜索特定事件并分析舆论趋势。
+一个基于 **Model Context Protocol (MCP)** 的 Java 热点新闻爬虫服务。它允许 AI 助手（如 Cherry Studio、Claude 等）实时通过简单的自然语言指令，获取全网热点新闻、搜索特定事件并分析舆论趋势。
 
 <details>
 <summary>👉 点击展开：LLM调用mcp-java-news-crawler图示</summary>
@@ -17,6 +17,17 @@
 - **🔥 获取多平台热榜** (`get_hot_news`): 支持知乎、微博、B 站、百度、抖音、头条。
 - **🔍 关键词搜索** (`search_news`): 在聚合的新闻数据中搜索特定关键词。
 - **📈 趋势话题分析** (`get_trending_topics`): 智能分析当前最热门的话题关键词及跨平台热度。
+
+## ⚙️ 配置说明
+
+部分爬虫（如 X/Twitter）需要鉴权 Token 才能正常工作。
+
+1. 复制配置文件示例：
+   ```bash
+   cp .env.example .env
+   ```
+2. 编辑 `.env` 文件，填入你的 API Token（例如 `TWITTER_BEARER_TOKEN`）。
+3. 程序启动时会自动读取根目录下的 `.env` 文件。
 
 ## 🛠️ 构建项目
 
