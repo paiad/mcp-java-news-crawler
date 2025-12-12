@@ -80,6 +80,27 @@ mvn clean package -DskipTests
 java -jar target/mcp-java-news-crawler-jar-with-dependencies.jar
 ```
 
+## 🐳 Docker 部署
+
+在项目根目录下执行以下命令：
+
+### 构建镜像
+
+```bash
+docker build -t mcp-java-news-crawler .
+```
+
+### 运行容器
+
+由于 MCP 服务器使用 STDIO 通信，需要以交互模式运行：
+
+```bash
+docker run -it --rm mcp-java-news-crawler
+```
+
+> [!NOTE]
+> Docker 镜像采用多阶段构建，最终镜像基于 `eclipse-temurin:17-jre-alpine`，体积小巧。
+
 ## 🍒 Cherry Studio 配置
 
 打开 Cherry Studio 设置 -> MCP Server -> 添加 JSON 配置：
