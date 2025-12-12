@@ -1,6 +1,7 @@
 package com.paiad.mcp.service;
 
 import com.hankcs.hanlp.HanLP;
+import com.paiad.mcp.config.PlatformPriorityConfig;
 import com.paiad.mcp.config.PlatformRegistry;
 import com.paiad.mcp.crawler.*;
 import com.paiad.mcp.model.CrawlResult;
@@ -33,6 +34,11 @@ public class NewsService {
     private final ExecutorService executorService;
 
     /**
+     * 平台优先级配置
+     */
+    private final PlatformPriorityConfig priorityConfig;
+
+    /**
      * 按平台缓存的新闻数据
      */
     private final Map<String, List<NewsItem>> platformCache = new ConcurrentHashMap<>();
@@ -51,6 +57,8 @@ public class NewsService {
         this.crawlers = new HashMap<>();
         // 线程池大小增加到12，确保能并发处理所有爬虫
         this.executorService = Executors.newFixedThreadPool(12);
+        // 加载平台优先级配置
+        this.priorityConfig = PlatformPriorityConfig.getInstance();
         initCrawlers();
     }
 
@@ -85,23 +93,46 @@ public class NewsService {
      */
     public CrawlResult getHotNews(List<String> platforms, int limit, boolean forceRefresh) {
         // 确定目标平台 (利用 Registry 解析别名)
-        Set<String> targetPlatformIds = new HashSet<>();
+        Set<String> targetPlatformIds = new LinkedHashSet<>();
+
         if (platforms == null || platforms.isEmpty()) {
-            targetPlatformIds.addAll(crawlers.keySet());
+            // 未指定平台时，按优先级配置获取默认平台
+            List<String> defaultPlatforms = priorityConfig.getDefaultPlatformIds();
+            for (String pid : defaultPlatforms) {
+                if (crawlers.containsKey(pid) && priorityConfig.isEnabled(pid)) {
+                    targetPlatformIds.add(pid);
+                }
+            }
+            // 如果配置的默认平台不足，补充其他启用的平台
+            if (targetPlatformIds.isEmpty()) {
+                for (String pid : priorityConfig.sortByPriority(crawlers.keySet())) {
+                    if (priorityConfig.isEnabled(pid)) {
+                        targetPlatformIds.add(pid);
+                    }
+                }
+            }
+            logger.info("未指定平台，使用默认优先级平台: {}", targetPlatformIds);
         } else {
             for (String p : platforms) {
                 String resolvedId = PlatformRegistry.resolveId(p);
                 if (resolvedId != null && crawlers.containsKey(resolvedId)) {
-                    targetPlatformIds.add(resolvedId);
+                    if (priorityConfig.isEnabled(resolvedId)) {
+                        targetPlatformIds.add(resolvedId);
+                    } else {
+                        logger.warn("平台已被禁用: {}", resolvedId);
+                    }
                 } else {
                     logger.warn("未知或不支持的平台: {}", p);
                 }
             }
         }
 
+        // 按优先级排序目标平台
+        List<String> sortedPlatforms = priorityConfig.sortByPriority(targetPlatformIds);
+
         // 找出需要刷新的平台
         List<String> platformsToRefresh = new ArrayList<>();
-        for (String platformId : targetPlatformIds) {
+        for (String platformId : sortedPlatforms) {
             if (forceRefresh || !isPlatformCacheValid(platformId)) {
                 platformsToRefresh.add(platformId);
             }
@@ -115,19 +146,19 @@ public class NewsService {
             failures.putAll(refreshFailures);
         }
 
-        // 从缓存收集结果
+        // 从缓存收集结果（按优先级顺序）
         List<NewsItem> result = new ArrayList<>();
-        for (String platformId : targetPlatformIds) {
+        for (String platformId : sortedPlatforms) {
             List<NewsItem> cached = platformCache.get(platformId);
             if (cached != null) {
                 result.addAll(cached);
             }
         }
 
-        // 限制返回数量 (按整体而非单平台，或者保持原样)
-        // 这里简单做个截断，也可以按热度排序后截断
-        if (result.size() > limit && limit > 0) {
-            result = result.subList(0, limit);
+        // 使用配置的默认 limit（如果用户未指定）
+        int effectiveLimit = limit > 0 ? limit : priorityConfig.getDefaultLimit();
+        if (result.size() > effectiveLimit) {
+            result = result.subList(0, effectiveLimit);
         }
 
         return new CrawlResult(result, failures);
@@ -217,14 +248,19 @@ public class NewsService {
         }
         String keyword = query.trim().toLowerCase();
 
-        // 1. 确定搜索范围
-        Set<String> targetPlatformIds = new HashSet<>();
+        // 1. 确定搜索范围（按优先级排序）
+        Set<String> targetPlatformIds = new LinkedHashSet<>();
         if (platforms == null || platforms.isEmpty()) {
-            targetPlatformIds.addAll(crawlers.keySet());
+            // 搜索时使用所有启用的平台
+            for (String pid : priorityConfig.sortByPriority(crawlers.keySet())) {
+                if (priorityConfig.isEnabled(pid)) {
+                    targetPlatformIds.add(pid);
+                }
+            }
         } else {
             for (String p : platforms) {
                 String resolvedId = PlatformRegistry.resolveId(p);
-                if (resolvedId != null && crawlers.containsKey(resolvedId)) {
+                if (resolvedId != null && crawlers.containsKey(resolvedId) && priorityConfig.isEnabled(resolvedId)) {
                     targetPlatformIds.add(resolvedId);
                 }
             }

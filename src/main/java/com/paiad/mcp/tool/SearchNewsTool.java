@@ -3,8 +3,8 @@ package com.paiad.mcp.tool;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.paiad.mcp.config.PlatformPriorityConfig;
 import com.paiad.mcp.model.CrawlResult;
 import com.paiad.mcp.model.NewsItem;
 import com.paiad.mcp.service.NewsService;
@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 搜索新闻工具
@@ -52,8 +53,12 @@ public class SearchNewsTool implements McpTool {
         ObjectNode items = objectMapper.createObjectNode();
         items.put("type", "string");
         platformsProp.set("items", items);
+        // 从配置中动态获取启用的平台列表
+        String enabledPlatforms = PlatformPriorityConfig.getInstance()
+                .getEnabledPlatformIdsSorted().stream()
+                .collect(Collectors.joining(", "));
         platformsProp.put("description",
-                "Limit search to platforms. Options: zhihu, weibo, bilibili, baidu, douyin, toutiao, x, reddit, google_news, wallstreetcn");
+                "Limit search to platforms. Available: " + enabledPlatforms);
         properties.set("platforms", platformsProp);
 
         ObjectNode limitProp = objectMapper.createObjectNode();

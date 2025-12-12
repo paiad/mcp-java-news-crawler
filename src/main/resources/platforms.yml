@@ -1,0 +1,70 @@
+# 平台优先级配置
+# 优先级数值越高，在结果中排序越靠前
+# enabled: 是否启用该平台
+# priority: 优先级 (1-100)，数值越大优先级越高
+#
+# 使用说明：
+# 1. 当用户未指定平台时，会按优先级顺序返回结果
+# 2. 可以通过设置 enabled: false 来禁用某个平台
+# 3. 优先级相同时，按平台 ID 字母顺序排序
+# 4. 修改此文件后需要重启服务才能生效
+
+platforms:
+  # 国内平台
+  douyin:
+    enabled: true
+    priority: 100
+    description: "抖音热点"
+
+  wallstreetcn:
+    enabled: true
+    priority: 95
+    description: "华尔街见闻"
+
+  toutiao:
+    enabled: true
+    priority: 90
+    description: "今日头条"
+
+  weibo:
+    enabled: true
+    priority: 85
+    description: "微博热搜"
+
+  zhihu:
+    enabled: true
+    priority: 80
+    description: "知乎热榜"
+
+  bilibili:
+    enabled: true
+    priority: 75
+    description: "B站热门"
+
+  baidu:
+    enabled: true
+    priority: 70
+    description: "百度热搜"
+
+  # 国际平台
+  google_news:
+    enabled: true
+    priority: 65
+    description: "Google News"
+
+  reddit:
+    enabled: true
+    priority: 60
+    description: "Reddit"
+
+  x:
+    enabled: true
+    priority: 55
+    description: "X (Twitter)"
+
+# 默认配置
+defaults:
+  # 当用户未指定平台时，最多返回几个平台的数据
+  maxDefaultPlatforms: 5
+  # 默认每个平台返回的新闻条数
+  defaultLimit: 10
