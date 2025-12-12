@@ -23,6 +23,7 @@ public abstract class AbstractCrawler {
 
     /**
      * HTTP 客户端 - 使用共享实例避免资源耗尽
+     * 国际平台使用代理客户端，国内平台使用直连客户端
      */
     protected final OkHttpClient httpClient;
 
@@ -39,7 +40,20 @@ public abstract class AbstractCrawler {
     public AbstractCrawler(String platformId, String platformName) {
         this.platformId = platformId;
         this.platformName = platformName;
-        this.httpClient = HttpClientFactory.getInstance();
+        // 根据平台类型选择客户端：国际平台使用代理，国内平台直连
+        this.httpClient = isInternational()
+                ? HttpClientFactory.getProxyInstance()
+                : HttpClientFactory.getInstance();
+    }
+
+    /**
+     * 是否为国际平台（需要代理访问）
+     * 子类可覆写此方法返回 true 以使用代理客户端
+     * 
+     * @return 默认 false，国际平台爬虫需覆写返回 true
+     */
+    protected boolean isInternational() {
+        return false;
     }
 
     /**

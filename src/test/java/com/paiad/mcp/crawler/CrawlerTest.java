@@ -21,16 +21,15 @@ public class CrawlerTest {
         System.out.println("========== 爬虫测试开始 ==========\n");
 
         // 测试国内平台
-//        testCrawler(new WeiboCrawler());
-//        testCrawler(new DouyinCrawler());
-//        testCrawler(new ToutiaoCrawler());
-//        testCrawler(new BilibiliCrawler());
-//        testCrawler(new BaiduCrawler());
-//        testCrawler(new ZhihuCrawler());
-//        testCrawler(new WallStreetCnCrawler());
+         testCrawler(new WeiboCrawler());
+         testCrawler(new DouyinCrawler());
+         testCrawler(new ToutiaoCrawler());
+         testCrawler(new BilibiliCrawler());
+         testCrawler(new BaiduCrawler());
+         testCrawler(new ZhihuCrawler());
+         testCrawler(new WallStreetCnCrawler());
 
         // 测试国际平台
-//        testCrawler(new XCrawler());
         testCrawler(new RedditCrawler());
         testCrawler(new GoogleNewsCrawler());
 
@@ -145,7 +144,6 @@ public class CrawlerTest {
             case "baidu" -> new BaiduCrawler();
             case "zhihu" -> new ZhihuCrawler();
             case "wallstreetcn" -> new WallStreetCnCrawler();
-            case "x" -> new XCrawler();
             case "reddit" -> new RedditCrawler();
             case "google_news" -> new GoogleNewsCrawler();
             default -> null;

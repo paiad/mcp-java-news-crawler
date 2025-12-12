@@ -72,7 +72,6 @@ public class NewsService {
         addCrawler(new BaiduCrawler());
         addCrawler(new DouyinCrawler());
         addCrawler(new ToutiaoCrawler());
-        addCrawler(new XCrawler());
         addCrawler(new RedditCrawler());
         addCrawler(new GoogleNewsCrawler());
         addCrawler(new WallStreetCnCrawler());

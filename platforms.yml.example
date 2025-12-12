@@ -63,11 +63,6 @@ platforms:
     enabled: true
     priority: 50
     description: "Reddit - 国际社区论坛"
-  
-  x:
-    enabled: true
-    priority: 45
-    description: "X (Twitter) - 国际社交媒体"
 
 # ============ 默认配置 ============
 defaults:

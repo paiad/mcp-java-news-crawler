@@ -20,7 +20,6 @@ public class PlatformRegistry {
         register("baidu", "Baidu", "bd");
         register("douyin", "Douyin", "dy");
         register("toutiao", "Toutiao", "tt");
-        register("x", "X (Twitter)", "twitter", "twitter.com");
         register("reddit", "Reddit", "rd");
         register("google_news", "Google News", "google", "googlenews");
         register("wallstreetcn", "WallStreetCN", "unique", "wallstreet");

@@ -57,11 +57,6 @@ platforms:
     priority: 60
     description: "Reddit"
 
-  x:
-    enabled: true
-    priority: 55
-    description: "X (Twitter)"
-
 # 默认配置
 defaults:
   # 当用户未指定平台时，最多返回几个平台的数据

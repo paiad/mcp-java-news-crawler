@@ -22,6 +22,11 @@ public class RedditCrawler extends AbstractCrawler {
     }
 
     @Override
+    protected boolean isInternational() {
+        return true;
+    }
+
+    @Override
     public List<NewsItem> crawl() {
         List<NewsItem> items = new ArrayList<>();
         try {
