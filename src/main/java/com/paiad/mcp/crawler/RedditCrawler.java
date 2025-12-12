@@ -5,7 +5,9 @@ import com.paiad.mcp.model.NewsItem;
 import com.paiad.mcp.util.JsonUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Reddit 爬虫
@@ -31,7 +33,7 @@ public class RedditCrawler extends AbstractCrawler {
         List<NewsItem> items = new ArrayList<>();
         try {
             // Reddit 需要设置 User-Agent 以避免 429 Too Many Requests
-            java.util.Map<String, String> headers = new java.util.HashMap<>();
+            Map<String, String> headers = new HashMap<>();
             headers.put("User-Agent", "MCP-News-Crawler/1.0");
 
             String response = doGet(API_URL, headers);

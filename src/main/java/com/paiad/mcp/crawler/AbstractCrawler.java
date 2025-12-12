@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 抽象爬虫基类
@@ -86,14 +87,14 @@ public abstract class AbstractCrawler {
     /**
      * 发送带自定义 Headers 的 GET 请求
      */
-    protected String doGet(String url, java.util.Map<String, String> headers) throws IOException {
+    protected String doGet(String url, Map<String, String> headers) throws IOException {
         Request.Builder builder = new Request.Builder()
                 .url(url)
                 .header("User-Agent",
                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
 
         if (headers != null) {
-            for (java.util.Map.Entry<String, String> entry : headers.entrySet()) {
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
                 builder.header(entry.getKey(), entry.getValue());
             }
         }

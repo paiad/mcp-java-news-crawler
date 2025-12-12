@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.paiad.mcp.model.NewsItem;
 import com.paiad.mcp.util.JsonUtils;
 
+import java.net.URLEncoder;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -74,7 +76,7 @@ public class WeiboCrawler extends AbstractCrawler {
 
     private String encodeUrl(String str) {
         try {
-            return java.net.URLEncoder.encode(str, "UTF-8");
+            return URLEncoder.encode(str, "UTF-8");
         } catch (Exception e) {
             return str;
         }
