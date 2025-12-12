@@ -5,7 +5,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Platform Registry to handle platform IDs and aliases.
+ * Platform Registry 用于统一管理平台的 ID 及其别名映射
+ *
+ * @author Paiad
  */
 public class PlatformRegistry {
 
@@ -34,8 +36,8 @@ public class PlatformRegistry {
     }
 
     /**
-     * Resolve input string to official platform ID.
-     * Returns null if not found.
+     * 将输入字符串解析为官方平台 ID
+     * 若未匹配到则返回 null
      */
     public static String resolveId(String input) {
         if (input == null)
