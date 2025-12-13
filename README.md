@@ -18,10 +18,10 @@
 ```
 src/main/java/com/paiad/mcp/
 ├── config/      # 平台与分类配置
-├── crawler/     # 🕷️ 各平台爬虫实现 (15个)
+├── crawler/     # 🕷️ 各平台爬虫实现
 ├── model/       # 📦 数据模型
 ├── service/     # 🔧 业务服务层
-├── tool/        # 🛠️ MCP 工具定义 (6个)
+├── tool/        # 🛠️ MCP 工具定义
 └── util/        # ⭐️ 工具类
 ```
 
