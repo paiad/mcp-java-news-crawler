@@ -7,10 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.paiad.mcp.service.NewsService;
 import com.paiad.mcp.service.TrendService;
-import com.paiad.mcp.tool.GetHotNewsTool;
-import com.paiad.mcp.tool.GetTrendingTopicsTool;
-import com.paiad.mcp.tool.McpTool;
-import com.paiad.mcp.tool.SearchNewsTool;
+import com.paiad.mcp.tool.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +50,9 @@ public class McpServerApplication {
         registerTool(new GetHotNewsTool(newsService));
         registerTool(new SearchNewsTool(newsService));
         registerTool(new GetTrendingTopicsTool(trendService));
+        registerTool(new GetPlatformListTool());
+        registerTool(new GetNewsByCategoryTool(newsService));
+        registerTool(new GetNewsSummaryTool(newsService));
 
         this.reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
         this.writer = new PrintWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8), true);
