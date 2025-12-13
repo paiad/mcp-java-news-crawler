@@ -176,12 +176,7 @@ java -jar target/mcp-java-news-crawler-jar-with-dependencies.jar
 **1. 初始化连接：**
 
 ```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "initialize",
-  "params": { "protocolVersion": "2024-11-05", "capabilities": {} }
-}
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{}}}
 ```
 
 **2. 查看可用工具：**
@@ -193,12 +188,7 @@ java -jar target/mcp-java-news-crawler-jar-with-dependencies.jar
 **3. 调用工具获取新闻：**
 
 ```json
-{
-  "jsonrpc": "2.0",
-  "id": 3,
-  "method": "tools/call",
-  "params": { "name": "get_hot_news", "arguments": { "limit": 5 } }
-}
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_hot_news","arguments":{"limit":5}}}
 ```
 
 > [!TIP]
