@@ -55,8 +55,8 @@ public class NewsService {
 
     public NewsService() {
         this.crawlers = new HashMap<>();
-        // 线程池大小增加到12，确保能并发处理所有爬虫
-        this.executorService = Executors.newFixedThreadPool(12);
+        // 线程池大小增加到16，确保能并发处理所有爬虫（目前14个）
+        this.executorService = Executors.newFixedThreadPool(16);
         // 加载平台优先级配置
         this.priorityConfig = PlatformPriorityConfig.getInstance();
         initCrawlers();
@@ -75,6 +75,11 @@ public class NewsService {
         addCrawler(new RedditCrawler());
         addCrawler(new GoogleNewsCrawler());
         addCrawler(new WallStreetCnCrawler());
+        addCrawler(new BBCCrawler());
+        addCrawler(new ReutersCrawler());
+        addCrawler(new APNewsCrawler());
+        addCrawler(new GuardianCrawler());
+        addCrawler(new TechCrunchCrawler());
         logger.info("初始化 {} 个平台爬虫", crawlers.size());
     }
 

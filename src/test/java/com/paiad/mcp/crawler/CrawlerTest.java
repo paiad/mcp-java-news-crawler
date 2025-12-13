@@ -21,17 +21,22 @@ public class CrawlerTest {
         System.out.println("========== 爬虫测试开始 ==========\n");
 
         // 测试国内平台
-         testCrawler(new WeiboCrawler());
-         testCrawler(new DouyinCrawler());
-         testCrawler(new ToutiaoCrawler());
-         testCrawler(new BilibiliCrawler());
-         testCrawler(new BaiduCrawler());
-         testCrawler(new ZhihuCrawler());
-         testCrawler(new WallStreetCnCrawler());
+        testCrawler(new WeiboCrawler());
+        testCrawler(new DouyinCrawler());
+        testCrawler(new ToutiaoCrawler());
+        testCrawler(new BilibiliCrawler());
+        testCrawler(new BaiduCrawler());
+        testCrawler(new ZhihuCrawler());
+        testCrawler(new WallStreetCnCrawler());
 
         // 测试国际平台
         testCrawler(new RedditCrawler());
         testCrawler(new GoogleNewsCrawler());
+        testCrawler(new BBCCrawler());
+        testCrawler(new ReutersCrawler());
+        testCrawler(new APNewsCrawler());
+        testCrawler(new GuardianCrawler());
+        testCrawler(new TechCrunchCrawler());
 
         System.out.println("\n========== 爬虫测试结束 ==========\n");
 
@@ -146,6 +151,11 @@ public class CrawlerTest {
             case "wallstreetcn" -> new WallStreetCnCrawler();
             case "reddit" -> new RedditCrawler();
             case "google_news" -> new GoogleNewsCrawler();
+            case "bbc" -> new BBCCrawler();
+            case "reuters" -> new ReutersCrawler();
+            case "apnews" -> new APNewsCrawler();
+            case "guardian" -> new GuardianCrawler();
+            case "techcrunch" -> new TechCrunchCrawler();
             default -> null;
         };
 

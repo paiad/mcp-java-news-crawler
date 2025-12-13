@@ -15,16 +15,23 @@ public class PlatformRegistry {
     private static final Map<String, String> OFFICIAL_NAMES = new HashMap<>();
 
     static {
-        // Register platforms and aliases
+        // Register platforms and aliases - 国内平台
         register("zhihu", "Zhihu", "zh");
         register("weibo", "Weibo", "wb");
         register("bilibili", "Bilibili", "bili");
         register("baidu", "Baidu", "bd");
         register("douyin", "Douyin", "dy");
         register("toutiao", "Toutiao", "tt");
-        register("reddit", "Reddit", "rd");
+        register("wallstreetcn", "WallStreetCN", "wallstreet");
+
+        // 国际平台
         register("google_news", "Google News", "google", "googlenews");
-        register("wallstreetcn", "WallStreetCN", "unique", "wallstreet");
+        register("reddit", "Reddit", "rd");
+        register("bbc", "BBC", "bbc_news");
+        register("reuters", "Reuters");
+        register("apnews", "AP News", "ap");
+        register("guardian", "The Guardian", "theguardian");
+        register("techcrunch", "TechCrunch", "tc");
     }
 
     private static void register(String id, String name, String... aliases) {

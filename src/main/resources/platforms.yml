@@ -57,6 +57,31 @@ platforms:
     priority: 60
     description: "Reddit"
 
+  bbc:
+    enabled: true
+    priority: 55
+    description: "BBC News"
+
+  reuters:
+    enabled: true
+    priority: 50
+    description: "Reuters"
+
+  apnews:
+    enabled: true
+    priority: 45
+    description: "AP News"
+
+  guardian:
+    enabled: true
+    priority: 40
+    description: "The Guardian"
+
+  techcrunch:
+    enabled: true
+    priority: 35
+    description: "TechCrunch"
+
 # 默认配置
 defaults:
   # 当用户未指定平台时，最多返回几个平台的数据

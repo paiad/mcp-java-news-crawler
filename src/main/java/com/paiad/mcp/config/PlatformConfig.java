@@ -19,6 +19,7 @@ public class PlatformConfig {
     public static final Map<String, PlatformInfo> PLATFORMS = new HashMap<>();
 
     static {
+        // 国内平台
         PLATFORMS.put("zhihu", new PlatformInfo("zhihu", "知乎", "https://www.zhihu.com/hot"));
         PLATFORMS.put("weibo", new PlatformInfo("weibo", "微博", "https://weibo.com/ajax/side/hotSearch"));
         PLATFORMS.put("bilibili",
@@ -29,6 +30,15 @@ public class PlatformConfig {
         PLATFORMS.put("toutiao", new PlatformInfo("toutiao", "头条", "https://www.toutiao.com/hot-event/hot-board/"));
         PLATFORMS.put("wallstreetcn",
                 new PlatformInfo("wallstreetcn", "华尔街见闻", "https://api-one-wscn.awtmt.com/apiv1/content/articles/hot"));
+
+        // 国际平台
+        PLATFORMS.put("google_news", new PlatformInfo("google_news", "Google News", "https://news.google.com/"));
+        PLATFORMS.put("reddit", new PlatformInfo("reddit", "Reddit", "https://www.reddit.com/r/worldnews/"));
+        PLATFORMS.put("bbc", new PlatformInfo("bbc", "BBC", "https://www.bbc.com/news"));
+        PLATFORMS.put("reuters", new PlatformInfo("reuters", "Reuters", "https://www.reuters.com/"));
+        PLATFORMS.put("apnews", new PlatformInfo("apnews", "AP News", "https://apnews.com/"));
+        PLATFORMS.put("guardian", new PlatformInfo("guardian", "The Guardian", "https://www.theguardian.com/"));
+        PLATFORMS.put("techcrunch", new PlatformInfo("techcrunch", "TechCrunch", "https://techcrunch.com/"));
     }
 
     /**
