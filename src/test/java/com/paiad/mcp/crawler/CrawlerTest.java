@@ -3,56 +3,88 @@ package com.paiad.mcp.crawler;
 import com.paiad.mcp.model.NewsItem;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * 爬虫测试类 - 测试每个平台的爬虫
  *
+ * 使用虚拟线程 (Java 21+) 并发测试所有爬虫
  * 最后会输出一个表格展示各平台运行结果
  *
  * @author Paiad
  */
 public class CrawlerTest {
 
-    // 存储最终表格用的数据
-    private static final List<ResultRow> resultTable = new ArrayList<>();
+    // 存储最终表格用的数据（线程安全）
+    private static final List<ResultRow> resultTable = Collections.synchronizedList(new ArrayList<>());
 
     public static void main(String[] args) {
 
-        System.out.println("========== 爬虫测试开始 ==========\n");
+        System.out.println("========== 爬虫测试开始 (虚拟线程并发模式) ==========\n");
 
-        // 测试国内平台
-        testCrawler(new WeiboCrawler());
-        testCrawler(new DouyinCrawler());
-        testCrawler(new ToutiaoCrawler());
-        testCrawler(new BilibiliCrawler());
-        testCrawler(new BaiduCrawler());
-        testCrawler(new ZhihuCrawler());
-        testCrawler(new WallStreetCnCrawler());
+        // 所有爬虫列表
+        List<AbstractCrawler> crawlers = List.of(
+                // 国内平台
+                new WeiboCrawler(),
+                new DouyinCrawler(),
+                new ToutiaoCrawler(),
+                new BilibiliCrawler(),
+                new BaiduCrawler(),
+                new ZhihuCrawler(),
+                new WallStreetCnCrawler(),
+                // 国际平台
+                new RedditCrawler(),
+                new GoogleNewsCrawler(),
+                new BBCCrawler(),
+                new ReutersCrawler(),
+                new APNewsCrawler(),
+                new GuardianCrawler(),
+                new TechCrunchCrawler());
 
-        // 测试国际平台
-        testCrawler(new RedditCrawler());
-        testCrawler(new GoogleNewsCrawler());
-        testCrawler(new BBCCrawler());
-        testCrawler(new ReutersCrawler());
-        testCrawler(new APNewsCrawler());
-        testCrawler(new GuardianCrawler());
-        testCrawler(new TechCrunchCrawler());
+        long totalStartTime = System.currentTimeMillis();
+
+        // 使用虚拟线程并发测试所有爬虫
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<Future<?>> futures = new ArrayList<>();
+            for (AbstractCrawler crawler : crawlers) {
+                futures.add(executor.submit(() -> testCrawler(crawler)));
+            }
+
+            // 等待所有任务完成
+            for (Future<?> future : futures) {
+                try {
+                    future.get(60, TimeUnit.SECONDS); // 单个爬虫最多等待60秒
+                } catch (TimeoutException e) {
+                    System.err.println("⚠️ 某个爬虫测试超时");
+                } catch (Exception e) {
+                    System.err.println("⚠️ 爬虫测试异常: " + e.getMessage());
+                }
+            }
+        }
+
+        long totalEndTime = System.currentTimeMillis();
 
         System.out.println("\n========== 爬虫测试结束 ==========\n");
+        System.out.println("🚀 总耗时: " + (totalEndTime - totalStartTime) + " ms (虚拟线程并发执行)\n");
 
         printSummaryTable(); // ✅ 输出表格
     }
 
+    // 用于同步打印输出的锁对象
+    private static final Object PRINT_LOCK = new Object();
+
     /**
-     * 测试单个爬虫
+     * 测试单个爬虫（线程安全，输出不会交织）
      */
     private static void testCrawler(AbstractCrawler crawler) {
         String platformName = crawler.getPlatformName();
         String platformId = crawler.getPlatformId();
 
-        System.out.println("----------------------------------------");
-        System.out.println("📰 测试平台: " + platformName + " (" + platformId + ")");
-        System.out.println("----------------------------------------");
+        // 使用 StringBuilder 收集所有输出
+        StringBuilder output = new StringBuilder();
+        output.append("\n----------------------------------------\n");
+        output.append("📰 测试平台: ").append(platformName).append(" (").append(platformId).append(")\n");
+        output.append("----------------------------------------\n");
 
         long startTime = System.currentTimeMillis();
         try {
@@ -60,29 +92,33 @@ public class CrawlerTest {
             long endTime = System.currentTimeMillis();
 
             if (items.isEmpty()) {
-                System.out.println("❌ 结果: 未获取到数据");
+                output.append("❌ 结果: 未获取到数据\n");
                 addResult(platformName, platformId, "失败", 0, endTime - startTime, "empty result");
             } else {
-                System.out.println("✅ 结果: 成功获取 " + items.size() + " 条数据");
-                System.out.println("⏱️ 耗时: " + (endTime - startTime) + " ms");
+                output.append("✅ 结果: 成功获取 ").append(items.size()).append(" 条数据\n");
+                output.append("⏱️ 耗时: ").append(endTime - startTime).append(" ms\n");
                 addResult(platformName, platformId, "成功", items.size(), endTime - startTime, "-");
 
-                System.out.println("\n📋 前5条数据预览:");
+                output.append("\n📋 前5条数据预览:\n");
                 int count = Math.min(5, items.size());
                 for (int i = 0; i < count; i++) {
                     NewsItem item = items.get(i);
-                    System.out.println("  " + item.getRank() + ". " + item.getTitle());
-                    System.out.println("     热度: " + (item.getHotDesc() != null ? item.getHotDesc() : "N/A"));
-                    System.out.println("     链接: " + item.getUrl());
+                    output.append("  ").append(item.getRank()).append(". ").append(item.getTitle()).append("\n");
+                    output.append("     热度: ").append(item.getHotDesc() != null ? item.getHotDesc() : "N/A")
+                            .append("\n");
+                    output.append("     链接: ").append(item.getUrl()).append("\n");
                 }
             }
         } catch (Exception e) {
             long endTime = System.currentTimeMillis();
-            System.out.println("❌ 错误: " + e.getMessage());
+            output.append("❌ 错误: ").append(e.getMessage()).append("\n");
             addResult(platformName, platformId, "异常", 0, endTime - startTime, e.getClass().getSimpleName());
         }
 
-        System.out.println();
+        // 原子性打印：确保每个平台的输出不会被其他线程打断
+        synchronized (PRINT_LOCK) {
+            System.out.print(output);
+        }
     }
 
     /**

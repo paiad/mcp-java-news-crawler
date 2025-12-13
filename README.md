@@ -153,7 +153,7 @@ HTTP_PROXY=http://127.0.0.1:7890
 
 ## 🛠️ 构建项目
 
-本项目使用标准 Maven 构建，要求 JDK 17+。
+本项目使用标准 Maven 构建，要求 JDK 21+（使用虚拟线程特性）。
 
 ```bash
 mvn clean package -DskipTests
@@ -255,7 +255,7 @@ docker run -it --rm mcp-java-news-crawler
 
 > [!NOTE]
 >
-> - Docker 镜像采用多阶段构建，最终镜像基于 `eclipse-temurin:17-jre-alpine`，体积小巧
+> - Docker 镜像采用多阶段构建，最终镜像基于 `eclipse-temurin:21-jre-alpine`，体积小巧
 > - 使用 `-i` 参数保持 stdin 打开，`-it` 用于交互测试，MCP 客户端只需 `-i`
 > - 确保 Docker 已安装并且镜像已构建
 
@@ -367,9 +367,9 @@ docker run -it --rm mcp-java-news-crawler
 
 <div align="center">
 
-**本项目在一定程度上可以帮你告别信息茧房，用AI洞悉世界。如果此项目对你有帮助，
+**本项目在一定程度上可以帮你告别信息茧房，用 AI 洞悉世界。如果此项目对你有帮助，
 希望你点一个 ⭐ Star！当然，因为笔者实力有限，项目本身可能存在一些或多或少的问题，亦或者你对项目想提出一些进一步的意见，
-笔者在此：欢迎大家提出issues和pull request！**
+笔者在此：欢迎大家提出 issues 和 pull request！**
 
 [⬆️ 回到顶部](#mcp-java-news-crawler)
 

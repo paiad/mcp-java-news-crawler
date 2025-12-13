@@ -55,8 +55,8 @@ public class NewsService {
 
     public NewsService() {
         this.crawlers = new HashMap<>();
-        // 线程池大小增加到16，确保能并发处理所有爬虫（目前14个）
-        this.executorService = Executors.newFixedThreadPool(16);
+        // 使用虚拟线程 (Java 21+)，每个任务一个虚拟线程，更轻量高效
+        this.executorService = Executors.newVirtualThreadPerTaskExecutor();
         // 加载平台优先级配置
         this.priorityConfig = PlatformPriorityConfig.getInstance();
         initCrawlers();
