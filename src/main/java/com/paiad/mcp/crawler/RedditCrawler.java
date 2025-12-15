@@ -1,23 +1,28 @@
 package com.paiad.mcp.crawler;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.paiad.mcp.model.NewsItem;
-import com.paiad.mcp.util.JsonUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Reddit 爬虫
+ * Reddit 爬虫 (使用 RSS Feed)
  * 
  * @author Paiad
  */
 public class RedditCrawler extends AbstractCrawler {
 
-    // Reddit 公开 JSON 接口，加上 .json 后缀即可
-    private static final String API_URL = "https://www.reddit.com/r/all/hot.json?limit=25";
+    // 使用 Reddit RSS Feed，更稳定不易被封
+    private static final String RSS_URL = "https://www.reddit.com/r/all/hot/.rss?limit=25";
 
     public RedditCrawler() {
         super("reddit", "Reddit");
@@ -32,63 +37,101 @@ public class RedditCrawler extends AbstractCrawler {
     public List<NewsItem> crawl() {
         List<NewsItem> items = new ArrayList<>();
         try {
-            // Reddit 需要设置 User-Agent 以避免 429 Too Many Requests
+            // 使用真实浏览器 User-Agent
             Map<String, String> headers = new HashMap<>();
-            headers.put("User-Agent", "MCP-News-Crawler/1.0");
+            headers.put("User-Agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+            headers.put("Accept", "application/rss+xml, application/xml, text/xml, */*");
+            headers.put("Accept-Language", "en-US,en;q=0.9");
 
-            String response = doGet(API_URL, headers);
+            String response = doGet(RSS_URL, headers);
 
             if (response != null && !response.isEmpty()) {
-                JsonNode json = JsonUtils.getMapper().readTree(response);
-                JsonNode data = json.get("data");
-                if (data != null) {
-                    JsonNode children = data.get("children");
-                    if (children != null && children.isArray()) {
-                        int rank = 1;
-                        for (JsonNode child : children) {
-                            JsonNode itemData = child.get("data");
-                            if (itemData != null) {
-                                String title = itemData.has("title") ? itemData.get("title").asText() : "";
-                                String permalink = itemData.has("permalink") ? itemData.get("permalink").asText() : "";
-                                String url = "https://www.reddit.com" + permalink;
-                                String id = itemData.has("id") ? itemData.get("id").asText() : "";
-                                long ups = itemData.has("ups") ? itemData.get("ups").asLong() : 0L;
-                                long numComments = itemData.has("num_comments") ? itemData.get("num_comments").asLong()
-                                        : 0L;
-                                String subreddit = itemData.has("subreddit") ? itemData.get("subreddit").asText() : "";
-
-                                if (!title.isEmpty()) {
-                                    NewsItem newsItem = NewsItem.builder()
-                                            .id("reddit_" + id)
-                                            .title(title)
-                                            .url(url)
-                                            .platform(platformId)
-                                            .platformName(platformName)
-                                            .rank(rank++)
-                                            .hotScore(ups)
-                                            .hotDesc(formatHotScore(ups) + " upvotes · " + subreddit) // 显示点赞数和子版块
-                                            .tag(subreddit)
-                                            .timestamp(System.currentTimeMillis())
-                                            .build();
-                                    items.add(newsItem);
-                                }
-                            }
-                        }
-                    }
-                }
+                items = parseRss(response);
             }
 
         } catch (Exception e) {
-            logger.error("Reddit 爬取失败: {}", e.getMessage());
+            logger.error("Reddit RSS 爬取失败: {}", e.getMessage());
         }
         return items;
     }
 
-    private String formatHotScore(Long score) {
-        if (score >= 1000) {
-            return String.format("%.1fk", score / 1000.0);
-        } else {
-            return String.valueOf(score);
+    private List<NewsItem> parseRss(String xml) {
+        List<NewsItem> items = new ArrayList<>();
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            // 禁用外部实体以防止 XXE 攻击
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+            // RSS 2.0 格式：<item> 或 Atom 格式：<entry>
+            NodeList entries = doc.getElementsByTagName("entry");
+            if (entries.getLength() == 0) {
+                entries = doc.getElementsByTagName("item");
+            }
+
+            int rank = 1;
+            for (int i = 0; i < entries.getLength() && i < 25; i++) {
+                Element entry = (Element) entries.item(i);
+
+                String title = getElementText(entry, "title");
+                String link = getAtomLink(entry);
+                if (link.isEmpty()) {
+                    link = getElementText(entry, "link");
+                }
+                String id = getElementText(entry, "id");
+                String category = getElementText(entry, "category");
+
+                if (!title.isEmpty() && !link.isEmpty()) {
+                    NewsItem newsItem = NewsItem.builder()
+                            .id("reddit_" + (id.isEmpty() ? String.valueOf(i) : id.hashCode()))
+                            .title(cleanTitle(title))
+                            .url(link)
+                            .platform(platformId)
+                            .platformName(platformName)
+                            .rank(rank++)
+                            .hotScore(0L)
+                            .hotDesc(category.isEmpty() ? "r/all" : category)
+                            .tag(category.isEmpty() ? "hot" : category)
+                            .timestamp(System.currentTimeMillis())
+                            .build();
+                    items.add(newsItem);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("解析 Reddit RSS 失败: {}", e.getMessage());
         }
+        return items;
+    }
+
+    private String getElementText(Element parent, String tagName) {
+        NodeList nodes = parent.getElementsByTagName(tagName);
+        if (nodes.getLength() > 0) {
+            return nodes.item(0).getTextContent().trim();
+        }
+        return "";
+    }
+
+    private String getAtomLink(Element entry) {
+        NodeList links = entry.getElementsByTagName("link");
+        for (int i = 0; i < links.getLength(); i++) {
+            Element link = (Element) links.item(i);
+            String href = link.getAttribute("href");
+            if (!href.isEmpty()) {
+                return href;
+            }
+        }
+        return "";
+    }
+
+    private String cleanTitle(String title) {
+        // 移除 HTML 实体和多余空格
+        return title.replaceAll("&amp;", "&")
+                .replaceAll("&lt;", "<")
+                .replaceAll("&gt;", ">")
+                .replaceAll("&quot;", "\"")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 }
