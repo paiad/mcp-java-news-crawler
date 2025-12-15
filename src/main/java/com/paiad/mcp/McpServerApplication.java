@@ -28,7 +28,7 @@ public class McpServerApplication {
     private static final Logger logger = LoggerFactory.getLogger(McpServerApplication.class);
 
     private static final String SERVER_NAME = "mcp-java-news-crawler";
-    private static final String SERVER_VERSION = "2.2.0";
+    private static final String SERVER_VERSION = "2.3.0";
     // MCP 协议版本（"2024-11-05" - 当前最新的稳定版本）
     private static final String PROTOCOL_VERSION = "2024-11-05";
 
