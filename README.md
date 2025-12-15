@@ -10,6 +10,9 @@
 ![p2](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p2.png)
 ![p3](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p3.png)
 ![p4](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p4.png)
+![p5](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p5.png)
+![p6](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p6.png)
+![p7](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p7.png)
 
 </details>
 
@@ -83,9 +86,6 @@ platforms:
     enabled: true # 是否启用
     priority: 90 # 优先级 (1-100)，越大越靠前
   # ... 其他平台
-
-defaults:
-  maxDefaultPlatforms: 5 # 未指定平台时返回前 N 个
 ```
 
 ### 用户偏好配置
@@ -176,7 +176,12 @@ java -jar target/mcp-java-news-crawler-jar-with-dependencies.jar
 **1. 初始化连接：**
 
 ```json
-{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{}}}
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": { "protocolVersion": "2024-11-05", "capabilities": {} }
+}
 ```
 
 **2. 查看可用工具：**
@@ -188,7 +193,12 @@ java -jar target/mcp-java-news-crawler-jar-with-dependencies.jar
 **3. 调用工具获取新闻：**
 
 ```json
-{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_hot_news","arguments":{"limit":5}}}
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": { "name": "get_hot_news", "arguments": { "limit": 5 } }
+}
 ```
 
 > [!TIP]

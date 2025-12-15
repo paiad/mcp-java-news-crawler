@@ -4,10 +4,12 @@ import lombok.Data;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 平台配置类
- * 
+ * 统一管理平台信息、别名映射
+ *
  * @author Paiad
  */
 @Data
@@ -16,30 +18,48 @@ public class PlatformConfig {
     /**
      * 支持的平台信息
      */
-    public static final Map<String, PlatformInfo> PLATFORMS = new HashMap<>();
+    private static final Map<String, PlatformInfo> PLATFORMS = new HashMap<>();
+
+    /**
+     * 别名到官方 ID 的映射
+     */
+    private static final Map<String, String> ALIAS_MAP = new HashMap<>();
 
     static {
         // 国内平台
-        PLATFORMS.put("zhihu", new PlatformInfo("zhihu", "知乎", "https://www.zhihu.com/hot"));
-        PLATFORMS.put("weibo", new PlatformInfo("weibo", "微博", "https://weibo.com/ajax/side/hotSearch"));
-        PLATFORMS.put("bilibili",
-                new PlatformInfo("bilibili", "B站", "https://api.bilibili.com/x/web-interface/ranking/v2"));
-        PLATFORMS.put("baidu", new PlatformInfo("baidu", "百度", "https://top.baidu.com/board?tab=realtime"));
-        PLATFORMS.put("douyin",
-                new PlatformInfo("douyin", "抖音", "https://www.douyin.com/aweme/v1/web/hot/search/list/"));
-        PLATFORMS.put("toutiao", new PlatformInfo("toutiao", "头条", "https://www.toutiao.com/hot-event/hot-board/"));
-        PLATFORMS.put("wallstreetcn",
-                new PlatformInfo("wallstreetcn", "华尔街见闻", "https://api-one-wscn.awtmt.com/apiv1/content/articles/hot"));
+        register("zhihu", "知乎", "https://www.zhihu.com/hot", "zh", "Zhihu");
+        register("weibo", "微博", "https://weibo.com/ajax/side/hotSearch", "wb", "Weibo");
+        register("bilibili", "B站", "https://api.bilibili.com/x/web-interface/ranking/v2", "bili", "Bilibili");
+        register("baidu", "百度", "https://top.baidu.com/board?tab=realtime", "bd", "Baidu");
+        register("douyin", "抖音", "https://www.douyin.com/aweme/v1/web/hot/search/list/", "dy", "Douyin");
+        register("toutiao", "头条", "https://www.toutiao.com/hot-event/hot-board/", "tt", "Toutiao");
+        register("wallstreetcn", "华尔街见闻", "https://api-one-wscn.awtmt.com/apiv1/content/articles/hot", "wallstreet",
+                "WallStreetCN");
 
         // 国际平台
-        PLATFORMS.put("google_news", new PlatformInfo("google_news", "Google News", "https://news.google.com/"));
-        PLATFORMS.put("reddit", new PlatformInfo("reddit", "Reddit", "https://www.reddit.com/r/worldnews/"));
-        PLATFORMS.put("bbc", new PlatformInfo("bbc", "BBC", "https://www.bbc.com/news"));
-        PLATFORMS.put("reuters", new PlatformInfo("reuters", "Reuters", "https://www.reuters.com/"));
-        PLATFORMS.put("apnews", new PlatformInfo("apnews", "AP News", "https://apnews.com/"));
-        PLATFORMS.put("guardian", new PlatformInfo("guardian", "The Guardian", "https://www.theguardian.com/"));
-        PLATFORMS.put("techcrunch", new PlatformInfo("techcrunch", "TechCrunch", "https://techcrunch.com/"));
+        register("google_news", "Google News", "https://news.google.com/", "google", "googlenews");
+        register("reddit", "Reddit", "https://www.reddit.com/r/worldnews/", "rd");
+        register("bbc", "BBC", "https://www.bbc.com/news", "bbc_news");
+        register("reuters", "Reuters", "https://www.reuters.com/");
+        register("apnews", "AP News", "https://apnews.com/", "ap");
+        register("guardian", "The Guardian", "https://www.theguardian.com/", "theguardian");
+        register("techcrunch", "TechCrunch", "https://techcrunch.com/", "tc");
     }
+
+    /**
+     * 注册平台信息和别名
+     */
+    private static void register(String id, String name, String url, String... aliases) {
+        PLATFORMS.put(id, new PlatformInfo(id, name, url));
+        // 添加 ID 自身作为别名（小写）
+        ALIAS_MAP.put(id.toLowerCase(), id);
+        // 添加额外的别名
+        for (String alias : aliases) {
+            ALIAS_MAP.put(alias.toLowerCase(), id);
+        }
+    }
+
+    // ========== 平台信息 API ==========
 
     /**
      * 获取平台信息
@@ -49,20 +69,42 @@ public class PlatformConfig {
     }
 
     /**
-     * 获取所有平台ID
+     * 获取所有平台 ID
      */
-    public static String[] getAllPlatformIds() {
-        return PLATFORMS.keySet().toArray(new String[0]);
+    public static Set<String> getAllPlatformIds() {
+        return PLATFORMS.keySet();
     }
+
+    // ========== 别名解析 API ==========
+
+    /**
+     * 将输入字符串（别名或 ID）解析为官方平台 ID
+     * 若未匹配到则返回 null
+     */
+    public static String resolveId(String input) {
+        if (input == null)
+            return null;
+        return ALIAS_MAP.get(input.trim().toLowerCase());
+    }
+
+    /**
+     * 获取平台显示名称
+     */
+    public static String getName(String id) {
+        PlatformInfo info = PLATFORMS.get(id);
+        return info != null ? info.getName() : null;
+    }
+
+    // ========== 内部类 ==========
 
     /**
      * 平台信息
      */
     @Data
     public static class PlatformInfo {
-        private String id;
-        private String name;
-        private String url;
+        private final String id;
+        private final String name;
+        private final String url;
 
         public PlatformInfo(String id, String name, String url) {
             this.id = id;

@@ -81,10 +81,3 @@ platforms:
     enabled: true
     priority: 35
     description: "TechCrunch"
-
-# 默认配置
-defaults:
-  # 当用户未指定平台时，最多返回几个平台的数据
-  maxDefaultPlatforms: 5
-  # 默认每个平台返回的新闻条数
-  defaultLimit: 10

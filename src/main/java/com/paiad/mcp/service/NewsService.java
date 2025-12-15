@@ -2,7 +2,7 @@ package com.paiad.mcp.service;
 
 import com.hankcs.hanlp.HanLP;
 import com.paiad.mcp.config.PlatformPriorityConfig;
-import com.paiad.mcp.config.PlatformRegistry;
+import com.paiad.mcp.config.PlatformConfig;
 import com.paiad.mcp.crawler.*;
 import com.paiad.mcp.model.CrawlResult;
 import com.paiad.mcp.model.NewsItem;
@@ -118,7 +118,7 @@ public class NewsService {
             logger.info("未指定平台，使用默认优先级平台: {}", targetPlatformIds);
         } else {
             for (String p : platforms) {
-                String resolvedId = PlatformRegistry.resolveId(p);
+                String resolvedId = PlatformConfig.resolveId(p);
                 if (resolvedId != null && crawlers.containsKey(resolvedId)) {
                     if (priorityConfig.isEnabled(resolvedId)) {
                         targetPlatformIds.add(resolvedId);
@@ -159,8 +159,8 @@ public class NewsService {
             }
         }
 
-        // 使用配置的默认 limit（如果用户未指定）
-        int effectiveLimit = limit > 0 ? limit : priorityConfig.getDefaultLimit();
+        // 如果用户未指定 limit，使用合理的默认值（AI 调用时通常会传入 limit）
+        int effectiveLimit = limit > 0 ? limit : 50;
         if (result.size() > effectiveLimit) {
             result = result.subList(0, effectiveLimit);
         }
@@ -263,7 +263,7 @@ public class NewsService {
             }
         } else {
             for (String p : platforms) {
-                String resolvedId = PlatformRegistry.resolveId(p);
+                String resolvedId = PlatformConfig.resolveId(p);
                 if (resolvedId != null && crawlers.containsKey(resolvedId) && priorityConfig.isEnabled(resolvedId)) {
                     targetPlatformIds.add(resolvedId);
                 }

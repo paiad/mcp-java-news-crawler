@@ -29,12 +29,6 @@ public class PlatformPriorityConfig {
      */
     private final Map<String, PriorityInfo> priorityInfoMap = new HashMap<>();
 
-    /**
-     * 默认配置
-     */
-    private int maxDefaultPlatforms = 5;
-    private int defaultLimit = 10;
-
     private PlatformPriorityConfig() {
         loadConfig();
     }
@@ -108,14 +102,7 @@ public class PlatformPriorityConfig {
             }
         }
 
-        // 解析默认配置
-        Map<String, Object> defaults = (Map<String, Object>) config.get("defaults");
-        if (defaults != null) {
-            maxDefaultPlatforms = getInt(defaults, "maxDefaultPlatforms", 5);
-            defaultLimit = getInt(defaults, "defaultLimit", 10);
-        }
-
-        logger.info("加载 {} 个平台优先级配置，默认返回 {} 个平台", priorityInfoMap.size(), maxDefaultPlatforms);
+        logger.info("加载 {} 个平台优先级配置", priorityInfoMap.size());
     }
 
     private void initDefaultConfig() {
@@ -202,12 +189,10 @@ public class PlatformPriorityConfig {
     }
 
     /**
-     * 获取默认平台 ID 列表（按优先级取前 N 个）
+     * 获取默认平台 ID 列表（返回所有启用的平台，按优先级排序）
      */
     public List<String> getDefaultPlatformIds() {
-        return getEnabledPlatformIdsSorted().stream()
-                .limit(maxDefaultPlatforms)
-                .collect(Collectors.toList());
+        return getEnabledPlatformIdsSorted();
     }
 
     /**
@@ -218,14 +203,6 @@ public class PlatformPriorityConfig {
                 .sorted(Comparator.comparingInt(this::getPriority).reversed()
                         .thenComparing(String::compareTo))
                 .collect(Collectors.toList());
-    }
-
-    public int getMaxDefaultPlatforms() {
-        return maxDefaultPlatforms;
-    }
-
-    public int getDefaultLimit() {
-        return defaultLimit;
     }
 
     // ========== 内部类 ==========
