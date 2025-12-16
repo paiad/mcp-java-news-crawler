@@ -1,4 +1,6 @@
-package com.paiad.mcp.crawler;
+package com.paiad.mcp.crawler.international;
+
+import com.paiad.mcp.crawler.AbstractCrawler;
 
 import com.paiad.mcp.model.NewsItem;
 import org.jsoup.Jsoup;
@@ -13,16 +15,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * BBC News 爬虫 (RSS)
+ * The Guardian 爬虫 (RSS)
  *
  * @author Paiad
  */
-public class BBCCrawler extends AbstractCrawler {
+public class GuardianCrawler extends AbstractCrawler {
 
-    private static final String API_URL = "https://feeds.bbci.co.uk/news/rss.xml";
+    private static final String API_URL = "https://www.theguardian.com/world/rss";
 
-    public BBCCrawler() {
-        super("bbc", "BBC News");
+    public GuardianCrawler() {
+        super("guardian", "The Guardian");
     }
 
     @Override
@@ -41,9 +43,10 @@ public class BBCCrawler extends AbstractCrawler {
             String xml = doGet(API_URL, headers);
 
             if (xml == null || xml.isEmpty()) {
-                logger.warn("BBC News: 响应内容为空");
+                logger.warn("The Guardian: 响应内容为空");
                 return items;
             }
+            logger.info("The Guardian: 获取到 XML 内容长度: {}", xml.length());
 
             Document doc = Jsoup.parse(xml, "", Parser.xmlParser());
             Elements itemsList = doc.select("item");
@@ -53,11 +56,14 @@ public class BBCCrawler extends AbstractCrawler {
                 String title = element.select("title").text();
                 String link = element.select("link").text();
                 String pubDate = element.select("pubDate").text();
-                String description = element.select("description").text();
+
+                // Guardian RSS often includes categories, dc:creator etc.
+                // Description can be long HTML, simplified here if needed, but not storing desc
+                // in NewsItem.
 
                 if (title != null && !title.isEmpty()) {
                     NewsItem newsItem = NewsItem.builder()
-                            .id("bbc_" + rank)
+                            .id("guardian_" + rank)
                             .title(title)
                             .url(link)
                             .platform(platformId)
@@ -75,7 +81,7 @@ public class BBCCrawler extends AbstractCrawler {
             }
 
         } catch (Exception e) {
-            logger.error("BBC News 爬取失败: {}", e.getMessage());
+            logger.error("The Guardian 爬取失败: {}", e.getMessage());
         }
         return items;
     }

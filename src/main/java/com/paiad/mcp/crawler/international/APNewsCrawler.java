@@ -1,4 +1,6 @@
-package com.paiad.mcp.crawler;
+package com.paiad.mcp.crawler.international;
+
+import com.paiad.mcp.crawler.AbstractCrawler;
 
 import com.paiad.mcp.model.NewsItem;
 import org.jsoup.Jsoup;

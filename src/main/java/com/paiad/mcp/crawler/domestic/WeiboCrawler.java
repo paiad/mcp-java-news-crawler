@@ -1,4 +1,6 @@
-package com.paiad.mcp.crawler;
+package com.paiad.mcp.crawler.domestic;
+
+import com.paiad.mcp.crawler.AbstractCrawler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.paiad.mcp.model.NewsItem;

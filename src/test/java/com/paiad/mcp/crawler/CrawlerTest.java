@@ -1,5 +1,7 @@
 package com.paiad.mcp.crawler;
 
+import com.paiad.mcp.crawler.domestic.*;
+import com.paiad.mcp.crawler.international.*;
 import com.paiad.mcp.model.NewsItem;
 
 import java.util.*;
