@@ -47,7 +47,8 @@ public class WeiboCrawler extends AbstractCrawler {
 
                         String word = item.has("word") ? item.get("word").asText() : "";
                         String note = item.has("note") ? item.get("note").asText() : null;
-                        Long rawHot = item.has("raw_hot") ? item.get("raw_hot").asLong() : 0L;
+                        // 使用 num 字段获取热度值（接口返回的热度数值）
+                        Long hotNum = item.has("num") ? item.get("num").asLong() : 0L;
                         String labelName = item.has("label_name") ? item.get("label_name").asText() : null;
 
                         String title = note != null ? note : word;
@@ -60,8 +61,8 @@ public class WeiboCrawler extends AbstractCrawler {
                                 .platform(platformId)
                                 .platformName(platformName)
                                 .rank(i + 1)
-                                .hotScore(rawHot)
-                                .hotDesc(formatHotScore(rawHot))
+                                .hotScore(hotNum)
+                                .hotDesc(formatHotScore(hotNum))
                                 .tag(labelName)
                                 .timestamp(System.currentTimeMillis())
                                 .build();

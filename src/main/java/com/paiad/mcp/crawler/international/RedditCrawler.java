@@ -11,9 +11,12 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -84,6 +87,14 @@ public class RedditCrawler extends AbstractCrawler {
                 }
                 String id = getElementText(entry, "id");
                 String category = getElementText(entry, "category");
+                // 获取发布时间 (RSS 2.0 用 pubDate，Atom 用 published/updated)
+                String pubTime = getElementText(entry, "pubDate");
+                if (pubTime.isEmpty()) {
+                    pubTime = getElementText(entry, "published");
+                }
+                if (pubTime.isEmpty()) {
+                    pubTime = getElementText(entry, "updated");
+                }
 
                 if (!title.isEmpty() && !link.isEmpty()) {
                     NewsItem newsItem = NewsItem.builder()
@@ -94,7 +105,7 @@ public class RedditCrawler extends AbstractCrawler {
                             .platformName(platformName)
                             .rank(rank++)
                             .hotScore(0L)
-                            .hotDesc(category.isEmpty() ? "r/all" : category)
+                            .hotDesc(formatToRfc1123(pubTime))
                             .tag(category.isEmpty() ? "hot" : category)
                             .timestamp(System.currentTimeMillis())
                             .build();
@@ -135,5 +146,23 @@ public class RedditCrawler extends AbstractCrawler {
                 .replaceAll("&quot;", "\"")
                 .replaceAll("\\s+", " ")
                 .trim();
+    }
+
+    /**
+     * 将 ISO-8601 时间格式转换为 RFC 1123 格式
+     * 输入: 2025-12-16T14:08:24+00:00
+     * 输出: Tue, 16 Dec 2025 14:08:24 GMT
+     */
+    private String formatToRfc1123(String isoTime) {
+        if (isoTime == null || isoTime.isEmpty()) {
+            return "N/A";
+        }
+        try {
+            ZonedDateTime dateTime = ZonedDateTime.parse(isoTime, DateTimeFormatter.ISO_DATE_TIME);
+            return dateTime.format(DateTimeFormatter.RFC_1123_DATE_TIME.withLocale(Locale.US));
+        } catch (Exception e) {
+            logger.debug("时间格式转换失败: {}", isoTime);
+            return isoTime; // 转换失败时返回原始字符串
+        }
     }
 }

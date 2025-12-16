@@ -9,9 +9,12 @@ import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -65,7 +68,7 @@ public class TechCrunchCrawler extends AbstractCrawler {
                             .platformName(platformName)
                             .rank(rank++)
                             .hotScore(0L)
-                            .hotDesc(pubDate)
+                            .hotDesc(formatToGmt(pubDate))
                             .timestamp(System.currentTimeMillis())
                             .build();
                     items.add(newsItem);
@@ -79,5 +82,25 @@ public class TechCrunchCrawler extends AbstractCrawler {
             logger.error("TechCrunch 爬取失败: {}", e.getMessage());
         }
         return items;
+    }
+
+    /**
+     * 将时间格式从 +0000 转换为 GMT
+     * 输入: Tue, 16 Dec 2025 16:11:16 +0000
+     * 输出: Tue, 16 Dec 2025 16:11:16 GMT
+     */
+    private String formatToGmt(String dateStr) {
+        if (dateStr == null || dateStr.isEmpty()) {
+            return "N/A";
+        }
+        try {
+            // RFC 2822 格式: "Tue, 16 Dec 2025 16:11:16 +0000"
+            DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US);
+            ZonedDateTime dateTime = ZonedDateTime.parse(dateStr, inputFormatter);
+            return dateTime.format(DateTimeFormatter.RFC_1123_DATE_TIME.withLocale(Locale.US));
+        } catch (Exception e) {
+            logger.debug("时间格式转换失败: {}", dateStr);
+            return dateStr;
+        }
     }
 }
