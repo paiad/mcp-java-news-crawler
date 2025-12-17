@@ -41,7 +41,8 @@ public class CrawlerTest {
                 new ReutersCrawler(),
                 new APNewsCrawler(),
                 new GuardianCrawler(),
-                new TechCrunchCrawler());
+                new TechCrunchCrawler(),
+                new HackerNewsCrawler());
 
         long totalStartTime = System.currentTimeMillis();
 
@@ -194,6 +195,7 @@ public class CrawlerTest {
             case "apnews" -> new APNewsCrawler();
             case "guardian" -> new GuardianCrawler();
             case "techcrunch" -> new TechCrunchCrawler();
+            case "hacker_news" -> new HackerNewsCrawler();
             default -> null;
         };
 

@@ -44,6 +44,7 @@ public class PlatformConfig {
         register("apnews", "AP News", "https://apnews.com/", "ap");
         register("guardian", "The Guardian", "https://www.theguardian.com/", "theguardian");
         register("techcrunch", "TechCrunch", "https://techcrunch.com/", "tc");
+        register("hacker_news", "Hacker News", "https://news.ycombinator.com/", "hn", "hackernews");
     }
 
     /**

@@ -82,6 +82,7 @@ public class NewsService {
         addCrawler(new APNewsCrawler());
         addCrawler(new GuardianCrawler());
         addCrawler(new TechCrunchCrawler());
+        addCrawler(new HackerNewsCrawler());
         logger.info("初始化 {} 个平台爬虫", crawlers.size());
     }
 

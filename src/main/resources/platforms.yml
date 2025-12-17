@@ -81,3 +81,8 @@ platforms:
     enabled: true
     priority: 35
     description: "TechCrunch"
+
+  hacker_news:
+    enabled: true
+    priority: 30
+    description: "Hacker News"

@@ -32,6 +32,7 @@ categories:
       - "sora"
       - "midjourney"
     platforms:
+      hacker_news: 5
       techcrunch: 5
       reddit: 4
       zhihu: 4
@@ -65,6 +66,7 @@ categories:
       - "开源"
       - "github"
     platforms:
+      hacker_news: 5
       techcrunch: 5
       bilibili: 4
       zhihu: 4

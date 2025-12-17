@@ -59,10 +59,11 @@ src/main/java/com/paiad/mcp/
 | `apnews`       | AP News      | 🌍 国际 | 美联社       |
 | `guardian`     | The Guardian | 🌍 国际 | 卫报         |
 | `techcrunch`   | TechCrunch   | 🌍 国际 | 科技资讯     |
+| `hacker_news`  | Hacker News  | 🌍 国际 | 黑客新闻     |
 
-> [!NOTE] 
+> [!NOTE]
 > **关于国际新闻平台**：国际媒体通常较为分散，数据多通过 RSS 订阅获取。RSS 仅提供最新文章列表，包括标题、摘要和发布时间，不包含热度或互动数据（如点赞、评论数）。
-> 因此在此项目中，默认通过RSS获取的国际平台的 `hotScore` 为 0，而`hotDesc` 为新闻发布时间（GMT）。
+> 因此在此项目中，默认通过 RSS 获取的国际平台的 `hotScore` 为 0，而`hotDesc` 一般为新闻发布时间（GMT）。
 
 ### 🏷️ 新闻分类
 
