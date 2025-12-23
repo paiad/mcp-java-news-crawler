@@ -1,9 +1,8 @@
 package com.paiad.mcp.crawler.domestic;
 
 import com.paiad.mcp.crawler.AbstractCrawler;
-
+import com.paiad.mcp.model.pojo.NewsItem;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.paiad.mcp.model.NewsItem;
 import com.paiad.mcp.util.JsonUtils;
 
 import java.net.URLEncoder;

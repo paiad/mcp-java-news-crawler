@@ -9,17 +9,68 @@
 # 3. 优先级相同时，按平台 ID 字母顺序排序
 # 4. 修改此文件后需要重启服务才能生效
 
+# 默认调用的平台数量（不指定平台时，取优先级最高的前 N 个平台）
+# 设置为 0 或不设置表示使用所有启用的平台
+default_platform_count: 5
+
 platforms:
-  # 国内平台
-  douyin:
+  # === AI/科技类媒体）===
+  hacker_news:
     enabled: true
     priority: 100
-    description: "抖音热点"
+    description: "Hacker News - 技术/AI社区"
+
+  techcrunch:
+    enabled: true
+    priority: 95
+    description: "TechCrunch - 科技/AI新闻"
+
+  reddit:
+    enabled: true
+    priority: 90
+    description: "Reddit - 技术/AI讨论"
 
   wallstreetcn:
     enabled: true
-    priority: 95
-    description: "华尔街见闻"
+    priority: 85
+    description: "华尔街见闻 - 财经/科技"
+
+  zhihu:
+    enabled: true
+    priority: 80
+    description: "知乎热榜 - 有AI讨论"
+
+  # === 综合新闻媒体 ===
+  google_news:
+    enabled: true
+    priority: 75
+    description: "Google News"
+
+  reuters:
+    enabled: true
+    priority: 70
+    description: "Reuters - 国际新闻"
+
+  bbc:
+    enabled: true
+    priority: 65
+    description: "BBC News"
+
+  guardian:
+    enabled: true
+    priority: 60
+    description: "The Guardian"
+
+  apnews:
+    enabled: true
+    priority: 55
+    description: "AP News"
+
+  # === 国内热点平台 ===
+  douyin:
+    enabled: true
+    priority: 99
+    description: "抖音热点"
 
   toutiao:
     enabled: true
@@ -28,61 +79,15 @@ platforms:
 
   weibo:
     enabled: true
-    priority: 85
+    priority: 40
     description: "微博热搜"
-
-  zhihu:
-    enabled: true
-    priority: 80
-    description: "知乎热榜"
 
   bilibili:
     enabled: true
-    priority: 75
+    priority: 35
     description: "B站热门"
 
   baidu:
     enabled: true
-    priority: 70
-    description: "百度热搜"
-
-  # 国际平台
-  google_news:
-    enabled: true
-    priority: 65
-    description: "Google News"
-
-  reddit:
-    enabled: true
-    priority: 60
-    description: "Reddit"
-
-  bbc:
-    enabled: true
-    priority: 55
-    description: "BBC News"
-
-  reuters:
-    enabled: true
-    priority: 50
-    description: "Reuters"
-
-  apnews:
-    enabled: true
-    priority: 45
-    description: "AP News"
-
-  guardian:
-    enabled: true
-    priority: 40
-    description: "The Guardian"
-
-  techcrunch:
-    enabled: true
-    priority: 35
-    description: "TechCrunch"
-
-  hacker_news:
-    enabled: true
     priority: 30
-    description: "Hacker News"
+    description: "百度热搜"

@@ -29,6 +29,11 @@ public class PlatformPriorityConfig {
      */
     private final Map<String, PriorityInfo> priorityInfoMap = new HashMap<>();
 
+    /**
+     * 默认调用的平台数量（0 表示使用所有启用的平台）
+     */
+    private int defaultPlatformCount = 0;
+
     private PlatformPriorityConfig() {
         loadConfig();
     }
@@ -87,6 +92,13 @@ public class PlatformPriorityConfig {
 
     @SuppressWarnings("unchecked")
     private void parseConfig(Map<String, Object> config) {
+        // 读取默认平台数量配置
+        Object countObj = config.get("default_platform_count");
+        if (countObj instanceof Number) {
+            this.defaultPlatformCount = ((Number) countObj).intValue();
+        }
+        logger.info("默认平台数量配置: {}", defaultPlatformCount > 0 ? defaultPlatformCount : "全部");
+
         // 解析平台配置
         Map<String, Object> platforms = (Map<String, Object>) config.get("platforms");
         if (platforms != null) {
@@ -106,22 +118,9 @@ public class PlatformPriorityConfig {
     }
 
     private void initDefaultConfig() {
-        // 默认配置
-        String[][] defaultPlatforms = {
-                { "zhihu", "90" },
-                { "weibo", "85" },
-                { "bilibili", "80" },
-                { "baidu", "75" },
-                { "douyin", "70" },
-                { "toutiao", "65" },
-                { "wallstreetcn", "60" },
-                { "google_news", "55" },
-                { "reddit", "50" },
-                { "x", "45" }
-        };
-        for (String[] p : defaultPlatforms) {
-            priorityInfoMap.put(p[0], new PriorityInfo(p[0], true, Integer.parseInt(p[1]), p[0]));
-        }
+        // 不再提供硬编码的默认配置,强制要求使用 platforms.yml
+        logger.warn("未找到 platforms.yml 配置文件,请在项目根目录或 classpath 中提供该文件");
+        logger.warn("参考格式请查看项目文档");
     }
 
     // ========== 工具方法 ==========
@@ -189,10 +188,21 @@ public class PlatformPriorityConfig {
     }
 
     /**
-     * 获取默认平台 ID 列表（返回所有启用的平台，按优先级排序）
+     * 获取默认平台 ID 列表（按优先级排序，受 default_platform_count 限制）
      */
     public List<String> getDefaultPlatformIds() {
-        return getEnabledPlatformIdsSorted();
+        List<String> all = getEnabledPlatformIdsSorted();
+        if (defaultPlatformCount > 0 && defaultPlatformCount < all.size()) {
+            return all.subList(0, defaultPlatformCount);
+        }
+        return all;
+    }
+
+    /**
+     * 获取默认平台数量配置
+     */
+    public int getDefaultPlatformCount() {
+        return defaultPlatformCount;
     }
 
     /**

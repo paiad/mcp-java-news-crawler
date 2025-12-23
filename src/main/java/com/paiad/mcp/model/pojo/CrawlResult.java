@@ -1,4 +1,4 @@
-package com.paiad.mcp.model;
+package com.paiad.mcp.model.pojo;
 
 import lombok.Getter;
 

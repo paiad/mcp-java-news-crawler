@@ -1,8 +1,8 @@
 package com.paiad.mcp.crawler.international;
 
 import com.paiad.mcp.crawler.AbstractCrawler;
+import com.paiad.mcp.model.pojo.NewsItem;
 
-import com.paiad.mcp.model.NewsItem;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;

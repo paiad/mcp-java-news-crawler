@@ -1,4 +1,4 @@
-package com.paiad.mcp.model;
+package com.paiad.mcp.model.pojo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -84,5 +84,12 @@ public class NewsItem implements Serializable {
         } else {
             return String.valueOf(hotScore);
         }
+    }
+
+    /**
+     * 转换为简化的 VO 格式（用于 MCP 工具返回）
+     */
+    public com.paiad.mcp.model.vo.NewsItemVO toVO() {
+        return com.paiad.mcp.model.vo.NewsItemVO.fromNewsItem(this);
     }
 }

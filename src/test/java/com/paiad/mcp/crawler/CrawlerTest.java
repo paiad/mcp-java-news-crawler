@@ -2,7 +2,7 @@ package com.paiad.mcp.crawler;
 
 import com.paiad.mcp.crawler.domestic.*;
 import com.paiad.mcp.crawler.international.*;
-import com.paiad.mcp.model.NewsItem;
+import com.paiad.mcp.model.pojo.NewsItem;
 
 import java.util.*;
 import java.util.concurrent.*;

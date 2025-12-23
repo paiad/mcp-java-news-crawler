@@ -4,18 +4,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.paiad.mcp.config.PlatformPriorityConfig;
-import com.paiad.mcp.model.CrawlResult;
-import com.paiad.mcp.model.NewsItem;
+import com.paiad.mcp.model.pojo.CrawlResult;
+import com.paiad.mcp.model.pojo.NewsItem;
+import com.paiad.mcp.model.vo.NewsItemVO;
 import com.paiad.mcp.service.NewsService;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * 获取热点新闻工具
+ * 支持多平台新闻获取和去重聚合
  */
 public class GetHotNewsTool implements McpTool {
 
@@ -32,7 +31,12 @@ public class GetHotNewsTool implements McpTool {
 
     @Override
     public String getDescription() {
-        return "Browse current top trending news from multiple platforms (Zhihu, Weibo, Bilibili, etc). Use this when the user asks 'what's new' or wants to see a leaderboard.";
+        PlatformPriorityConfig config = PlatformPriorityConfig.getInstance();
+        List<String> defaultPlatforms = config.getDefaultPlatformIds();
+        return "Get current top trending news from multiple platforms. "
+                + "IMPORTANT: Do NOT specify 'platforms' parameter - the system will automatically use the top "
+                + defaultPlatforms.size() + " platforms by priority: " + String.join(", ", defaultPlatforms) + ". "
+                + "Supports deduplication and cross-platform aggregation.";
     }
 
     @Override
@@ -47,12 +51,16 @@ public class GetHotNewsTool implements McpTool {
         ObjectNode items = objectMapper.createObjectNode();
         items.put("type", "string");
         platformsProp.set("items", items);
-        // 从配置中动态获取启用的平台列表
-        String enabledPlatforms = PlatformPriorityConfig.getInstance()
-                .getEnabledPlatformIdsSorted().stream()
+        // 从配置中动态获取默认平台列表
+        PlatformPriorityConfig config = PlatformPriorityConfig.getInstance();
+        List<String> defaultPlatforms = config.getDefaultPlatformIds();
+        String allPlatforms = config.getEnabledPlatformIdsSorted().stream()
                 .collect(Collectors.joining(", "));
         platformsProp.put("description",
-                "Platform IDs. Available: " + enabledPlatforms + ". Empty for default priority platforms.");
+                "Optional. Platform IDs to fetch news from. RECOMMENDED: Do NOT specify this parameter. "
+                        + "Default: automatically uses top " + defaultPlatforms.size() + " platforms by priority ("
+                        + String.join(", ", defaultPlatforms) + "). "
+                        + "All available platforms: " + allPlatforms);
         properties.set("platforms", platformsProp);
 
         ObjectNode limitProp = objectMapper.createObjectNode();
@@ -61,11 +69,12 @@ public class GetHotNewsTool implements McpTool {
         limitProp.put("default", 50);
         properties.set("limit", limitProp);
 
-        ObjectNode refreshProp = objectMapper.createObjectNode();
-        refreshProp.put("type", "boolean");
-        refreshProp.put("description", "Force refresh cache, default false");
-        refreshProp.put("default", false);
-        properties.set("refresh", refreshProp);
+        ObjectNode dedupeProp = objectMapper.createObjectNode();
+        dedupeProp.put("type", "boolean");
+        dedupeProp.put("description",
+                "Remove duplicate news by clustering similar titles and rank by cross-platform coverage. Use this when user wants 'summary' or 'top headlines'. Default false.");
+        dedupeProp.put("default", false);
+        properties.set("dedupe", dedupeProp);
 
         schema.set("properties", properties);
         schema.set("required", objectMapper.createArrayNode());
@@ -86,23 +95,160 @@ public class GetHotNewsTool implements McpTool {
         int limit = arguments.has("limit") ? arguments.get("limit").asInt(50) : 50;
         limit = Math.min(limit, 200);
 
-        boolean refresh = arguments.has("refresh") && arguments.get("refresh").asBoolean(false);
+        boolean dedupe = arguments.has("dedupe") && arguments.get("dedupe").asBoolean(false);
 
-        CrawlResult crawlResult = newsService.getHotNews(platforms, limit, refresh);
+        CrawlResult crawlResult = newsService.getHotNews(platforms, dedupe ? 200 : limit);
         List<NewsItem> news = crawlResult.getData();
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("success", true);
-        result.put("count", news.size());
+
+        if (dedupe) {
+            // 去重聚合模式
+            List<NewsCluster> clusters = clusterNews(news);
+
+            // 按跨平台覆盖度和热度排序
+            clusters.sort((a, b) -> {
+                int cmp = Integer.compare(b.platformCount, a.platformCount);
+                if (cmp != 0)
+                    return cmp;
+                return Long.compare(b.totalHotScore, a.totalHotScore);
+            });
+
+            // 取 Top N
+            List<Map<String, Object>> summaryItems = new ArrayList<>();
+            int count = 0;
+            for (NewsCluster cluster : clusters) {
+                if (count >= limit)
+                    break;
+
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("rank", count + 1);
+                item.put("title", cluster.representativeTitle);
+                item.put("platforms", cluster.platforms);
+                item.put("platform_count", cluster.platformCount);
+
+                if (cluster.representativeUrl != null) {
+                    item.put("url", cluster.representativeUrl);
+                }
+
+                if (cluster.totalHotScore > 0) {
+                    item.put("total_hot_score", cluster.totalHotScore);
+                }
+
+                summaryItems.add(item);
+                count++;
+            }
+
+            result.put("count", summaryItems.size());
+            result.put("total_news_analyzed", news.size());
+            result.put("data", summaryItems);
+        } else {
+            // 普通模式 - 转换为简化的 VO 格式
+            result.put("count", news.size());
+            List<NewsItemVO> formattedNews = news.stream()
+                    .map(NewsItem::toVO)
+                    .collect(Collectors.toList());
+            result.put("data", formattedNews);
+        }
 
         if (crawlResult.hasFailures()) {
             result.put("failures", crawlResult.getFailures());
-            // 如果全部失败且没有数据，标记 success=false ? 保持 true 但返回 error info 更好，让 LLM 决定
         }
 
         result.put("timestamp", System.currentTimeMillis());
-        result.put("data", news);
 
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
+    }
+
+    /**
+     * 将新闻按相似标题聚类
+     */
+    private List<NewsCluster> clusterNews(List<NewsItem> news) {
+        List<NewsCluster> clusters = new ArrayList<>();
+
+        for (NewsItem item : news) {
+            String title = item.getTitle();
+            if (title == null || title.isEmpty())
+                continue;
+
+            // 尝试找到相似的现有聚类
+            NewsCluster matchedCluster = null;
+            for (NewsCluster cluster : clusters) {
+                if (isSimilar(title, cluster.representativeTitle)) {
+                    matchedCluster = cluster;
+                    break;
+                }
+            }
+
+            if (matchedCluster != null) {
+                matchedCluster.addNews(item);
+            } else {
+                NewsCluster newCluster = new NewsCluster();
+                newCluster.addNews(item);
+                clusters.add(newCluster);
+            }
+        }
+
+        return clusters;
+    }
+
+    /**
+     * 判断两个标题是否相似 (使用 Jaccard 相似度)
+     */
+    private boolean isSimilar(String title1, String title2) {
+        if (title1 == null || title2 == null)
+            return false;
+
+        Set<Character> set1 = new HashSet<>();
+        Set<Character> set2 = new HashSet<>();
+
+        for (char c : title1.toLowerCase().toCharArray()) {
+            if (Character.isLetterOrDigit(c)) {
+                set1.add(c);
+            }
+        }
+        for (char c : title2.toLowerCase().toCharArray()) {
+            if (Character.isLetterOrDigit(c)) {
+                set2.add(c);
+            }
+        }
+
+        if (set1.isEmpty() || set2.isEmpty())
+            return false;
+
+        Set<Character> intersection = new HashSet<>(set1);
+        intersection.retainAll(set2);
+
+        Set<Character> union = new HashSet<>(set1);
+        union.addAll(set2);
+
+        double similarity = (double) intersection.size() / union.size();
+        return similarity > 0.6;
+    }
+
+    /**
+     * 新闻聚类
+     */
+    private static class NewsCluster {
+        String representativeTitle;
+        String representativeUrl;
+        Set<String> platforms = new LinkedHashSet<>();
+        int platformCount = 0;
+        long totalHotScore = 0;
+
+        void addNews(NewsItem item) {
+            if (representativeTitle == null) {
+                representativeTitle = item.getTitle();
+                representativeUrl = item.getUrl();
+            }
+
+            platforms.add(item.getPlatformName() != null ? item.getPlatformName() : item.getPlatform());
+            platformCount = platforms.size();
+
+            if (item.getHotScore() != null) {
+                totalHotScore += item.getHotScore();
+            }
+        }
     }
 }
