@@ -1,6 +1,6 @@
 package com.paiad.mcp.crawler;
 
-import com.paiad.mcp.model.NewsItem;
+import com.paiad.mcp.model.pojo.NewsItem;
 import com.paiad.mcp.util.HttpClientFactory;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

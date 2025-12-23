@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.paiad.mcp.service.NewsService;
-import com.paiad.mcp.service.TrendService;
 import com.paiad.mcp.tool.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,13 +27,12 @@ public class McpServerApplication {
     private static final Logger logger = LoggerFactory.getLogger(McpServerApplication.class);
 
     private static final String SERVER_NAME = "mcp-java-news-crawler";
-    private static final String SERVER_VERSION = "2.3.0";
+    private static final String SERVER_VERSION = "3.0.0";
     // MCP 协议版本（"2024-11-05" - 当前最新的稳定版本）
     private static final String PROTOCOL_VERSION = "2024-11-05";
 
     private final ObjectMapper objectMapper;
     private final NewsService newsService;
-    private final TrendService trendService;
     private final Map<String, McpTool> tools;
 
     private final BufferedReader reader;
@@ -43,16 +41,11 @@ public class McpServerApplication {
     public McpServerApplication() {
         this.objectMapper = new ObjectMapper();
         this.newsService = new NewsService();
-        this.trendService = new TrendService(newsService);
         this.tools = new HashMap<>();
 
-        // 注册工具
+        // 注册核心工具
         registerTool(new GetHotNewsTool(newsService));
         registerTool(new SearchNewsTool(newsService));
-        registerTool(new GetTrendingTopicsTool(trendService));
-        registerTool(new GetPlatformListTool());
-        registerTool(new GetNewsByCategoryTool(newsService));
-        registerTool(new GetNewsSummaryTool(newsService));
 
         this.reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
         this.writer = new PrintWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8), true);

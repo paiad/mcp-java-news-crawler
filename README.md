@@ -20,9 +20,11 @@
 
 ```
 src/main/java/com/paiad/mcp/
-├── config/      # 平台与分类配置
+├── config/      # 平台配置
 ├── crawler/     # 🕷️ 各平台爬虫实现
 ├── model/       # 📦 数据模型
+│   ├── pojo/    # 领域实体（NewsItem, CrawlResult）
+│   └── vo/      # 视图对象（NewsItemVO）
 ├── service/     # 🔧 业务服务层
 ├── tool/        # 🛠️ MCP 工具定义
 └── util/        # ⭐️ 工具类
@@ -32,14 +34,10 @@ src/main/java/com/paiad/mcp/
 
 ### MCP 工具列表
 
-| 工具名称               | 功能描述                              |
-| ---------------------- | ------------------------------------- |
-| `get_hot_news`         | 🔥 获取多平台热榜新闻                 |
-| `search_news`          | 🔍 关键词搜索新闻                     |
-| `get_trending_topics`  | 📈 智能分析热门话题及跨平台热度       |
-| `get_platform_list`    | 📋 获取所有可用平台列表及状态         |
-| `get_news_by_category` | 🏷️ 按分类获取新闻（支持用户偏好配置） |
-| `get_news_summary`     | 📰 聚合多平台新闻摘要，去重排序       |
+| 工具名称       | 功能描述              |
+| -------------- | --------------------- |
+| `get_hot_news` | 🔥 获取多平台热榜新闻 |
+| `search_news`  | 🔍 关键词搜索新闻     |
 
 ### 📡 支持的新闻媒体
 
@@ -61,23 +59,8 @@ src/main/java/com/paiad/mcp/
 | `techcrunch`   | TechCrunch   | 🌍 国际 | 科技资讯     |
 | `hacker_news`  | Hacker News  | 🌍 国际 | 黑客新闻     |
 
-> [!NOTE]
-> **关于国际新闻平台**：国际媒体通常较为分散，数据多通过 RSS 订阅获取。RSS 仅提供最新文章列表，包括标题、摘要和发布时间，不包含热度或互动数据（如点赞、评论数）。
+> [!NOTE] > **关于国际新闻平台**：国际媒体通常较为分散，数据多通过 RSS 订阅获取。RSS 仅提供最新文章列表，包括标题、摘要和发布时间，不包含热度或互动数据（如点赞、评论数）。
 > 因此在此项目中，默认通过 RSS 获取的国际平台的 `hotScore` 为 0，而`hotDesc` 一般为新闻发布时间（GMT）。
-
-### 🏷️ 新闻分类
-
-支持 7 个内置分类，可通过 `get_news_by_category` 工具使用：
-
-| 分类 ID         | 名称     | 说明                         |
-| --------------- | -------- | ---------------------------- |
-| `ai`            | 人工智能 | ChatGPT、大模型、机器学习等  |
-| `tech`          | 科技     | 互联网、芯片、手机、新能源等 |
-| `finance`       | 财经     | 股票、基金、经济、投资等     |
-| `entertainment` | 娱乐     | 明星、电影、综艺等           |
-| `sports`        | 体育     | 足球、篮球、电竞等           |
-| `world`         | 国际     | 国际新闻、外交、时政等       |
-| `society`       | 社会     | 民生、教育、医疗等           |
 
 ## ⚙️ 配置文件
 
@@ -91,44 +74,6 @@ platforms:
     enabled: true # 是否启用
     priority: 90 # 优先级 (1-100)，越大越靠前
   # ... 其他平台
-```
-
-### 用户偏好配置
-
-编辑 `src/main/resources/preferences.yml` 可自定义分类权重：
-
-```yaml
-# 分类权重 (0-5)
-# 0=不感兴趣, 1=偶尔, 2=一般, 3=比较关注, 4=非常关注, 5=重点关注
-category_weights:
-  ai: 5 # 人工智能
-  tech: 4 # 科技
-  finance: 3 # 财经
-  entertainment: 2 # 娱乐
-  sports: 1 # 体育
-  world: 3 # 国际
-  society: 2 # 社会
-
-default_limit: 30 # 默认返回条数
-```
-
-当调用 `get_news_by_category` 不指定分类时，会根据权重比例混合返回新闻。
-
-### 分类定义配置
-
-编辑 `src/main/resources/categories.yml` 可自定义分类的关键词和平台映射：
-
-```yaml
-categories:
-  ai:
-    name: "人工智能"
-    keywords:
-      - "ai"
-      - "chatgpt"
-      - "大模型"
-    platforms:
-      techcrunch: 5
-      zhihu: 4
 ```
 
 修改配置后需重新打包 (`mvn clean package`) 并重启服务。

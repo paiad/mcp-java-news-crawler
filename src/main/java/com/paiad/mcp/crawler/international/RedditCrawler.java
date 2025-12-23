@@ -1,8 +1,8 @@
 package com.paiad.mcp.crawler.international;
 
 import com.paiad.mcp.crawler.AbstractCrawler;
+import com.paiad.mcp.model.pojo.NewsItem;
 
-import com.paiad.mcp.model.NewsItem;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;

@@ -21,20 +21,20 @@ MCP Java News Crawler is a Java-based hot news crawler service built on the **Mo
 
 ```
 src/main/java/com/paiad/mcp/
-├── config/       # Platform & category configuration
+├── config/       # Platform configuration
 ├── crawler/      # Crawler implementations
 │   ├── domestic/     # Chinese platforms (Weibo, Zhihu, Bilibili, etc.)
 │   └── international/ # International (Reddit, BBC, HackerNews, etc.)
-├── model/        # Data models (NewsItem, etc.)
+├── model/        # Data models
+│   ├── pojo/         # Domain entities (NewsItem, CrawlResult)
+│   └── vo/           # View objects (NewsItemVO)
 ├── service/      # Business logic (NewsService)
 ├── tool/         # MCP tool definitions
 └── util/         # Utilities (HttpClientFactory)
 
 src/main/resources/
-├── platforms.yml    # Platform priority & enable settings
-├── categories.yml   # News category keywords & platform mapping
-├── preferences.yml  # User preference weights
-└── logback.xml      # Logging config (stderr only!)
+├── platforms.yml         # Platform priority & enable settings
+└── simplelogger.properties # Logging config (stderr only!)
 ```
 
 ## Key Commands
@@ -76,13 +76,10 @@ docker build -t mcp-java-news-crawler .
 4. Implement `crawl()` method returning `List<NewsItem>`
 5. Register in `PlatformConfig.java`
 6. Add config in `platforms.yml`
-7. Optionally add to `categories.yml` for category mapping
 
 ### Configuration Files
 
 - **platforms.yml**: Enable/disable platforms, set priority (1-100)
-- **categories.yml**: Define keywords and platform weights per category
-- **preferences.yml**: User category weight preferences (0-5)
 
 ## Important Conventions
 

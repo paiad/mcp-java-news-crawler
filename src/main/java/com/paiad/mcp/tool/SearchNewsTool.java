@@ -5,8 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.paiad.mcp.config.PlatformPriorityConfig;
-import com.paiad.mcp.model.CrawlResult;
-import com.paiad.mcp.model.NewsItem;
+import com.paiad.mcp.model.pojo.CrawlResult;
+import com.paiad.mcp.model.pojo.NewsItem;
+import com.paiad.mcp.model.vo.NewsItemVO;
 import com.paiad.mcp.service.NewsService;
 
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class SearchNewsTool implements McpTool {
 
     @Override
     public String getDescription() {
-        return "Search for specific topics or keywords in news across all platforms. Triggers smart crawling if needed. Use this for specific queries.";
+        return "Search for specific topics or keywords in news across platforms. Supports fuzzy matching with Chinese word segmentation. Use this when the user asks about specific topics, events, or keywords (e.g., 'AI news', 'Trump', 'Bitcoin').";
     }
 
     @Override
@@ -106,7 +107,12 @@ public class SearchNewsTool implements McpTool {
         }
 
         result.put("timestamp", System.currentTimeMillis());
-        result.put("data", news);
+
+        // 转换为简化的 VO 格式
+        List<NewsItemVO> formattedNews = news.stream()
+                .map(NewsItem::toVO)
+                .collect(Collectors.toList());
+        result.put("data", formattedNews);
 
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
     }
