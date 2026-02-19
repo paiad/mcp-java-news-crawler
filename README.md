@@ -6,13 +6,13 @@
 <summary>👉 点击展开：LLM调用mcp-java-news-crawler图示</summary>
 <br>
 
-![p1](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p1.png)
-![p2](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p2.png)
-![p3](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p3.png)
-![p4](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p4.png)
-![p5](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p5.png)
-![p6](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p6.png)
-![p7](https://cdn.jsdelivr.net/gh/paiad/picture-bed@main/img/mcp-news-crawler-p7.png)
+![p1](https://img.paiad.top/img/mcp-news-crawler-p1.png)
+![p2](https://img.paiad.top/img/mcp-news-crawler-p2.png)
+![p3](https://img.paiad.top/img/mcp-news-crawler-p3.png)
+![p4](https://img.paiad.top/img/mcp-news-crawler-p4.png)
+![p5](https://img.paiad.top/img/mcp-news-crawler-p5.png)
+![p6](https://img.paiad.top/img/mcp-news-crawler-p6.png)
+![p7](https://img.paiad.top/img/mcp-news-crawler-p7.png)
 
 </details>
 
