@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.paiad.mcp.config.PlatformPriorityConfig;
 import com.paiad.mcp.model.pojo.CrawlResult;
 import com.paiad.mcp.model.pojo.NewsItem;
+import com.paiad.mcp.model.pojo.PlatformCrawlOutcome;
 import com.paiad.mcp.model.vo.NewsItemVO;
 import com.paiad.mcp.service.NewsService;
 
@@ -102,6 +103,7 @@ public class GetHotNewsTool implements McpTool {
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("success", true);
+        result.put("partial_success", crawlResult.isPartialSuccess());
 
         if (dedupe) {
             // 去重聚合模式
@@ -154,11 +156,30 @@ public class GetHotNewsTool implements McpTool {
 
         if (crawlResult.hasFailures()) {
             result.put("failures", crawlResult.getFailures());
+            result.put("failure_count", crawlResult.getFailures().size());
+            result.put("failure_details", buildFailureDetails(crawlResult.getOutcomes()));
         }
 
         result.put("timestamp", System.currentTimeMillis());
 
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
+    }
+
+    private List<Map<String, Object>> buildFailureDetails(List<PlatformCrawlOutcome> outcomes) {
+        List<Map<String, Object>> details = new ArrayList<>();
+        for (PlatformCrawlOutcome outcome : outcomes) {
+            if (!outcome.isFailure()) {
+                continue;
+            }
+            Map<String, Object> detail = new LinkedHashMap<>();
+            detail.put("platform", outcome.platformId());
+            detail.put("status", outcome.status().name());
+            detail.put("error_code", outcome.errorCode());
+            detail.put("error_message", outcome.errorMessage());
+            detail.put("latency_ms", outcome.latencyMs());
+            details.add(detail);
+        }
+        return details;
     }
 
     /**

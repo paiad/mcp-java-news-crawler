@@ -1,6 +1,8 @@
 package com.paiad.mcp.crawler;
 
 import com.paiad.mcp.model.pojo.NewsItem;
+import com.paiad.mcp.model.pojo.PlatformCrawlOutcome;
+import com.paiad.mcp.model.pojo.PlatformCrawlStatus;
 import com.paiad.mcp.util.HttpClientFactory;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -9,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -73,7 +74,6 @@ public abstract class AbstractCrawler {
                 .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
                 .header("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
                 .header("Accept-Encoding", "gzip, deflate, br")
-                .header("Connection", "close")
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
@@ -112,20 +112,34 @@ public abstract class AbstractCrawler {
     /**
      * 安全执行爬取，捕获异常
      */
-    public List<NewsItem> safeCrawl() {
+    public PlatformCrawlOutcome crawlWithOutcome() {
+        long startTime = System.currentTimeMillis();
         try {
             List<NewsItem> items = crawl();
+            long latencyMs = System.currentTimeMillis() - startTime;
             if (items.isEmpty()) {
                 logger.warn("[{}] 爬取完成但返回空数据", platformName);
+                return new PlatformCrawlOutcome(platformId, platformName, PlatformCrawlStatus.EMPTY, items, null, null,
+                        latencyMs);
             } else {
                 logger.info("[{}] 成功爬取 {} 条热榜数据", platformName, items.size());
+                return new PlatformCrawlOutcome(platformId, platformName, PlatformCrawlStatus.SUCCESS, items, null, null,
+                        latencyMs);
             }
-            return items;
         } catch (Exception e) {
+            long latencyMs = System.currentTimeMillis() - startTime;
             // 记录详细的错误信息
             logger.error("[{}] 爬取失败: {} ({})", platformName, e.getMessage(), e.getClass().getSimpleName());
-            return Collections.emptyList();
+            return new PlatformCrawlOutcome(platformId, platformName, PlatformCrawlStatus.FAILED, List.of(),
+                    e.getClass().getSimpleName(), e.getMessage(), latencyMs);
         }
+    }
+
+    /**
+     * 兼容旧调用：返回爬取数据列表。
+     */
+    public List<NewsItem> safeCrawl() {
+        return crawlWithOutcome().items();
     }
 
     public String getPlatformId() {

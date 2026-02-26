@@ -32,6 +32,8 @@ public final class HttpClientFactory {
 
     private static volatile OkHttpClient instance;
     private static volatile OkHttpClient proxyInstance;
+    private static final int DOMESTIC_TIMEOUT_SECONDS = 20;
+    private static final int INTERNATIONAL_TIMEOUT_SECONDS = 35;
 
     private HttpClientFactory() {
     }
@@ -43,7 +45,7 @@ public final class HttpClientFactory {
         if (instance == null) {
             synchronized (HttpClientFactory.class) {
                 if (instance == null) {
-                    instance = createClient(null);
+                    instance = createClient(null, DOMESTIC_TIMEOUT_SECONDS);
                     logger.info("HttpClientFactory: 创建共享 OkHttpClient 实例（直连）");
                 }
             }
@@ -61,7 +63,7 @@ public final class HttpClientFactory {
                 if (proxyInstance == null) {
                     Proxy proxy = getConfiguredProxy();
                     if (proxy != null) {
-                        proxyInstance = createClient(proxy);
+                        proxyInstance = createClient(proxy, INTERNATIONAL_TIMEOUT_SECONDS);
                         logger.info("HttpClientFactory: 创建共享 OkHttpClient 实例（代理模式）");
                     } else {
                         // 未配置代理时，回退到直连
@@ -162,11 +164,11 @@ public final class HttpClientFactory {
      * 
      * @param proxy 代理配置，null 表示直连
      */
-    private static OkHttpClient createClient(Proxy proxy) {
+    private static OkHttpClient createClient(Proxy proxy, int timeoutSeconds) {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
+                .connectTimeout(timeoutSeconds, TimeUnit.SECONDS)
+                .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
+                .writeTimeout(timeoutSeconds, TimeUnit.SECONDS)
                 // 连接池: 最多20个空闲连接，存活5分钟
                 .connectionPool(new ConnectionPool(20, 5, TimeUnit.MINUTES))
                 .followRedirects(true)

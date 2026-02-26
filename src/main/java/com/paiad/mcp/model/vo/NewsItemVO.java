@@ -35,6 +35,16 @@ public class NewsItemVO {
     private String hot;
 
     /**
+     * 新闻链接
+     */
+    private String url;
+
+    /**
+     * 发布时间（可选）
+     */
+    private String publishedAt;
+
+    /**
      * 从 NewsItem 转换为 VO
      */
     public static NewsItemVO fromNewsItem(NewsItem item) {
@@ -53,6 +63,25 @@ public class NewsItemVO {
                 .title(item.getTitle())
                 .platform(item.getPlatformName() != null ? item.getPlatformName() : item.getPlatform())
                 .hot(hot)
+                .url(item.getUrl())
+                .publishedAt(extractPublishedAt(item))
                 .build();
+    }
+
+    private static String extractPublishedAt(NewsItem item) {
+        if (item.getHotScore() != null && item.getHotScore() > 0) {
+            return null;
+        }
+        String hotDesc = item.getHotDesc();
+        if (hotDesc == null || hotDesc.isBlank()) {
+            return null;
+        }
+
+        // RSS-like times are often represented in hotDesc for international sources.
+        if (hotDesc.contains("GMT") || hotDesc.contains("UTC") || hotDesc.contains(",")
+                || hotDesc.matches(".*\\d{4}-\\d{2}-\\d{2}.*")) {
+            return hotDesc;
+        }
+        return null;
     }
 }

@@ -4,6 +4,8 @@ import com.hankcs.hanlp.HanLP;
 import com.paiad.mcp.crawler.AbstractCrawler;
 import com.paiad.mcp.model.pojo.CrawlResult;
 import com.paiad.mcp.model.pojo.NewsItem;
+import com.paiad.mcp.model.pojo.PlatformCrawlOutcome;
+import com.paiad.mcp.model.pojo.PlatformCrawlStatus;
 import com.paiad.mcp.registry.CrawlerRegistry;
 import com.paiad.mcp.registry.PlatformRegistry;
 import com.paiad.mcp.util.HttpClientFactory;
@@ -39,6 +41,7 @@ public class NewsService {
         this.platformRegistry = PlatformRegistry.getInstance();
         this.crawlerRegistry = CrawlerRegistry.getInstance();
         logger.info("初始化 {} 个平台爬虫", crawlerRegistry.getSupportedPlatformIds().size());
+        validateRegistryConsistency();
     }
 
     /**
@@ -58,7 +61,7 @@ public class NewsService {
             result = result.subList(0, effectiveLimit);
         }
 
-        return new CrawlResult(result, crawlResult.getFailures());
+        return new CrawlResult(result, crawlResult.getFailures(), crawlResult.getOutcomes());
     }
 
     /**
@@ -119,7 +122,7 @@ public class NewsService {
                 .limit(limit > 0 ? limit : 20)
                 .collect(Collectors.toList());
 
-        return new CrawlResult(matched, crawlResult.getFailures());
+        return new CrawlResult(matched, crawlResult.getFailures(), crawlResult.getOutcomes());
     }
 
     /**
@@ -143,35 +146,60 @@ public class NewsService {
         logger.info("开始爬取 {} 个平台: {}", platformIds.size(), platformIds);
         Map<String, String> failures = new HashMap<>();
         List<NewsItem> allNews = new ArrayList<>();
+        List<PlatformCrawlOutcome> outcomes = new ArrayList<>();
 
-        Map<String, Future<List<NewsItem>>> futures = new LinkedHashMap<>();
+        Map<String, Future<PlatformCrawlOutcome>> futures = new LinkedHashMap<>();
         for (String platformId : platformIds) {
             AbstractCrawler crawler = crawlerRegistry.getCrawler(platformId);
             if (crawler != null) {
-                futures.put(platformId, executorService.submit(crawler::safeCrawl));
+                futures.put(platformId, executorService.submit(crawler::crawlWithOutcome));
             }
         }
 
         for (String platformId : platformIds) {
-            Future<List<NewsItem>> future = futures.get(platformId);
+            Future<PlatformCrawlOutcome> future = futures.get(platformId);
             if (future == null) {
                 continue;
             }
 
             try {
-                List<NewsItem> items = future.get(45, TimeUnit.SECONDS);
-                if (items == null) {
-                    items = Collections.emptyList();
+                PlatformCrawlOutcome outcome = future.get(45, TimeUnit.SECONDS);
+                if (outcome == null) {
+                    outcome = new PlatformCrawlOutcome(platformId, platformRegistry.getName(platformId),
+                            PlatformCrawlStatus.FAILED, List.of(), "NULL_OUTCOME", "Crawler returned null outcome", 0);
                 }
-                allNews.addAll(items);
-                logger.info("[{}] 爬取完成，共 {} 条", platformId, items.size());
+                outcomes.add(outcome);
+                allNews.addAll(outcome.items());
+                if (outcome.isFailure()) {
+                    failures.put(platformId, formatFailure(outcome));
+                    logger.error("[{}] 爬取失败: {}", platformId, failures.get(platformId));
+                } else {
+                    logger.info("[{}] 爬取完成，共 {} 条", platformId, outcome.items().size());
+                }
+            } catch (TimeoutException e) {
+                future.cancel(true);
+                PlatformCrawlOutcome timeoutOutcome = new PlatformCrawlOutcome(platformId, platformRegistry.getName(platformId),
+                        PlatformCrawlStatus.TIMEOUT, List.of(), "TIMEOUT", "Platform crawl timed out", 45_000);
+                outcomes.add(timeoutOutcome);
+                failures.put(platformId, formatFailure(timeoutOutcome));
+                logger.error("[{}] 爬取超时", platformId);
+            } catch (ExecutionException e) {
+                Throwable cause = e.getCause() != null ? e.getCause() : e;
+                PlatformCrawlOutcome failedOutcome = new PlatformCrawlOutcome(platformId, platformRegistry.getName(platformId),
+                        PlatformCrawlStatus.FAILED, List.of(), cause.getClass().getSimpleName(), cause.getMessage(), 0);
+                outcomes.add(failedOutcome);
+                failures.put(platformId, formatFailure(failedOutcome));
+                logger.error("[{}] 爬取失败: {}", platformId, cause.getMessage());
             } catch (Exception e) {
+                PlatformCrawlOutcome failedOutcome = new PlatformCrawlOutcome(platformId, platformRegistry.getName(platformId),
+                        PlatformCrawlStatus.FAILED, List.of(), e.getClass().getSimpleName(), e.getMessage(), 0);
+                outcomes.add(failedOutcome);
+                failures.put(platformId, formatFailure(failedOutcome));
                 logger.error("[{}] 爬取失败: {}", platformId, e.getMessage());
-                failures.put(platformId, e.getMessage());
             }
         }
 
-        return new CrawlResult(allNews, failures);
+        return new CrawlResult(allNews, failures, outcomes);
     }
 
     private List<String> resolveTargetPlatforms(List<String> platforms, boolean fallbackWhenDefaultEmpty) {
@@ -216,5 +244,43 @@ public class NewsService {
     public void shutdown() {
         executorService.shutdown();
         HttpClientFactory.shutdown();
+    }
+
+    private String formatFailure(PlatformCrawlOutcome outcome) {
+        String code = outcome.errorCode() != null ? outcome.errorCode() : "UNKNOWN";
+        String message = outcome.errorMessage() != null ? outcome.errorMessage() : "Unknown error";
+        return code + ": " + message;
+    }
+
+    private void validateRegistryConsistency() {
+        boolean strict = Boolean.parseBoolean(System.getenv().getOrDefault("STRICT_PLATFORM_VALIDATION", "false"));
+        List<String> missing = findMissingCrawlerRegistrations(
+                platformRegistry.getEnabledPlatformIdsSorted(),
+                crawlerRegistry.getSupportedPlatformIds());
+        enforceRegistryConsistency(missing, strict);
+        if (!missing.isEmpty()) {
+            logger.warn("启用平台未注册爬虫: {}，系统将以降级模式运行", String.join(", ", missing));
+        }
+    }
+
+    static List<String> findMissingCrawlerRegistrations(Collection<String> enabledPlatformIds,
+            Set<String> supportedPlatformIds) {
+        if (enabledPlatformIds == null || enabledPlatformIds.isEmpty()) {
+            return List.of();
+        }
+        Set<String> supported = supportedPlatformIds == null ? Set.of() : supportedPlatformIds;
+        return enabledPlatformIds.stream()
+                .filter(id -> !supported.contains(id))
+                .sorted()
+                .toList();
+    }
+
+    static void enforceRegistryConsistency(List<String> missingPlatformIds, boolean strict) {
+        if (missingPlatformIds == null || missingPlatformIds.isEmpty()) {
+            return;
+        }
+        if (strict) {
+            throw new IllegalStateException("启用平台未注册爬虫: " + String.join(", ", missingPlatformIds));
+        }
     }
 }
