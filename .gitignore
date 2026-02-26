@@ -28,3 +28,6 @@ logs/
 
 ### Config ###
 .env
+
+### Codex ###
+.codex/
