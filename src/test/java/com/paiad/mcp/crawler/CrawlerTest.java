@@ -1,8 +1,7 @@
 package com.paiad.mcp.crawler;
 
-import com.paiad.mcp.crawler.domestic.*;
-import com.paiad.mcp.crawler.international.*;
 import com.paiad.mcp.model.pojo.NewsItem;
+import com.paiad.mcp.registry.CrawlerRegistry;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -24,25 +23,7 @@ public class CrawlerTest {
 
         System.out.println("========== 爬虫测试开始 (虚拟线程并发模式) ==========\n");
 
-        // 所有爬虫列表
-        List<AbstractCrawler> crawlers = List.of(
-                // 国内平台
-                new WeiboCrawler(),
-                new DouyinCrawler(),
-                new ToutiaoCrawler(),
-                new BilibiliCrawler(),
-                new BaiduCrawler(),
-                new ZhihuCrawler(),
-                new WallStreetCnCrawler(),
-                // 国际平台
-                new RedditCrawler(),
-                new GoogleNewsCrawler(),
-                new BBCCrawler(),
-                new ReutersCrawler(),
-                new APNewsCrawler(),
-                new GuardianCrawler(),
-                new TechCrunchCrawler(),
-                new HackerNewsCrawler());
+        List<AbstractCrawler> crawlers = new ArrayList<>(CrawlerRegistry.getInstance().getAllCrawlers());
 
         long totalStartTime = System.currentTimeMillis();
 
@@ -180,24 +161,7 @@ public class CrawlerTest {
      * 仅测试单个平台
      */
     public static void testSinglePlatform(String platformId) {
-        AbstractCrawler crawler = switch (platformId.toLowerCase()) {
-            case "weibo" -> new WeiboCrawler();
-            case "douyin" -> new DouyinCrawler();
-            case "toutiao" -> new ToutiaoCrawler();
-            case "bilibili" -> new BilibiliCrawler();
-            case "baidu" -> new BaiduCrawler();
-            case "zhihu" -> new ZhihuCrawler();
-            case "wallstreetcn" -> new WallStreetCnCrawler();
-            case "reddit" -> new RedditCrawler();
-            case "google_news" -> new GoogleNewsCrawler();
-            case "bbc" -> new BBCCrawler();
-            case "reuters" -> new ReutersCrawler();
-            case "apnews" -> new APNewsCrawler();
-            case "guardian" -> new GuardianCrawler();
-            case "techcrunch" -> new TechCrunchCrawler();
-            case "hacker_news" -> new HackerNewsCrawler();
-            default -> null;
-        };
+        AbstractCrawler crawler = CrawlerRegistry.getInstance().getCrawler(platformId.toLowerCase());
 
         if (crawler == null) {
             System.out.println("未知平台: " + platformId);
