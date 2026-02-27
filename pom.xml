@@ -6,7 +6,7 @@
 
     <groupId>com.paiad.mcp</groupId>
     <artifactId>mcp-java-news-crawler</artifactId>
-    <version>1.0.0</version>
+    <version>3.1.0</version>
     <packaging>jar</packaging>
     <name>MCP Java News Crawler</name>
     <description>MCP News Crawler – Breaking the Filter Bubble.</description>
