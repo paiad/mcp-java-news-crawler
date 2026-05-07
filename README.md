@@ -114,13 +114,36 @@ mvn clean package -DskipTests
 
 ## 🚀 快速运行
 
-你可以通过命令行直接运行（仅供测试，MCP 客户端会自动在后台运行它）：
+默认以 `STDIO` 传输启动，适合 Claude Desktop、Cherry Studio、Codex CLI 这类本地 MCP 客户端：
 
 ```bash
 java -jar target/mcp-java-news-crawler-jar-with-dependencies.jar
 ```
 
+### 传输模式
+
+可以通过环境变量切换传输层：
+
+```bash
+MCP_TRANSPORT=stdio|http|both
+MCP_HTTP_HOST=127.0.0.1
+MCP_HTTP_PORT=8080
+```
+
+- `stdio`
+  保持当前默认行为，通过 stdin/stdout 提供 MCP 服务
+- `http`
+  启动 Streamable HTTP MCP 服务，监听 `http://127.0.0.1:8080/mcp`
+- `both`
+  同时启动 `STDIO` 和 `Streamable HTTP`
+
+> [!NOTE]
+>
+> 当前 v1 只支持 `STDIO` 与 `Streamable HTTP`，不提供 legacy SSE 传输。
+
 ### 手动测试 MCP 协议
+
+#### STDIO 模式
 
 启动后，服务会等待 stdin 输入。你可以粘贴以下 JSON 测试连接：
 
@@ -144,6 +167,29 @@ java -jar target/mcp-java-news-crawler-jar-with-dependencies.jar
 
 > [!TIP]
 > 每条 JSON 输入后按回车发送。服务会通过 stdout 返回 JSON-RPC 响应。
+
+#### Streamable HTTP 模式
+
+先启动 HTTP 传输：
+
+```bash
+MCP_TRANSPORT=http MCP_HTTP_HOST=127.0.0.1 MCP_HTTP_PORT=8080 \
+java -jar target/mcp-java-news-crawler-jar-with-dependencies.jar
+```
+
+然后向 `/mcp` 发送 JSON-RPC `POST` 请求：
+
+```bash
+curl -X POST http://127.0.0.1:8080/mcp \
+  -H 'Content-Type: application/json' \
+  -d '{ "jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {} }'
+```
+
+> [!NOTE]
+>
+> - v1 仅支持 `POST /mcp`
+> - JSON-RPC notification 会返回 `202 Accepted`
+> - `GET` / `DELETE` 会返回 `405 Method Not Allowed`
 
 ## 🐳 Docker 部署
 
